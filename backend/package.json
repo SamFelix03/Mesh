@@ -1,0 +1,29 @@
+{
+  "name": "@mesh-protocol/backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "e2e:shannon": "tsx scripts/e2e-shannon.ts",
+    "e2e:compiled": "tsx scripts/e2e-compiled-deploy.ts",
+    "deploy:registry": "tsx scripts/deploy-registry.ts",
+    "mesh": "tsx scripts/mesh-cli.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "@fastify/websocket": "^11.2.0",
+    "@somnia-chain/reactivity": "^0.1.10",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
