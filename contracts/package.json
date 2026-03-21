@@ -1,0 +1,8 @@
+{
+  "name": "@mesh-protocol/contracts",
+  "private": true,
+  "version": "0.1.0",
+  "dependencies": {
+    "@somnia-chain/reactivity-contracts": "0.1.6"
+  }
+}

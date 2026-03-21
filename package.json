@@ -1,0 +1,9 @@
+{
+  "name": "mesh-somnia",
+  "private": true,
+  "description": "Mesh — reactive workflows on Somnia Shannon",
+  "scripts": {
+    "contracts:build": "cd contracts && forge build",
+    "build:all": "npm run contracts:build && cd backend && npm run build && cd ../frontend && npm run build"
+  }
+}
