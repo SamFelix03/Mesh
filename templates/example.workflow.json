@@ -1,0 +1,25 @@
+{
+  "id": "example-compiled-linear",
+  "name": "Example linear DAG (compiler-ready)",
+  "nodes": [
+    {
+      "id": "watch",
+      "trigger": {
+        "type": "event",
+        "emitter": "0x0000000000000000000000000000000000000001",
+        "eventTopic0": "0x48257dc961b6f792c2b78a080dacfed693b660960a702de21cee364e20270e2f"
+      },
+      "action": { "type": "noop" }
+    },
+    {
+      "id": "follow",
+      "trigger": {
+        "type": "event",
+        "emitter": "0x0000000000000000000000000000000000000001",
+        "eventTopic0": "0x48257dc961b6f792c2b78a080dacfed693b660960a702de21cee364e20270e2f"
+      },
+      "action": { "type": "noop" }
+    }
+  ],
+  "edges": [{ "from": "watch", "to": "follow", "label": "chain" }]
+}
