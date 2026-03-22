@@ -6,7 +6,7 @@ The canonical product specification lives in [`docs/mesh_prd.md`](docs/mesh_prd.
 
 ## Shannon testnet — deployed contract reference
 
-_Chain id `50312`._ Canonical pin file: [`contracts/deployments/shannon-demo.json`](contracts/deployments/shannon-demo.json) (updated when you run `demo:bootstrap:shannon`). [Explorer](https://shannon-explorer.somnia.network/) · RPC `https://dream-rpc.somnia.network`
+_Chain id `50312`._ Canonical pin file: [`backend/contracts/deployments/shannon-demo.json`](backend/contracts/deployments/shannon-demo.json) (updated when you run `demo:bootstrap:shannon`). [Explorer](https://shannon-explorer.somnia.network/) · RPC `https://dream-rpc.somnia.network`
 
 | Artifact | Contract / role | Address (team demo) |
 | -------- | ---------------- | --------------------- |
@@ -18,7 +18,7 @@ _Chain id `50312`._ Canonical pin file: [`contracts/deployments/shannon-demo.jso
 | **Demo 1 — root subscription** | Somnia `createSoliditySubscription` id | `22401` |
 | **Demo 2 — fan-out** | 3 × `MeshSimpleStepNode` + 3 subs | Run `npm run demo:bootstrap:shannon` once; then see `demo02Fanout` in `shannon-demo.json` |
 
-**Deploy registry + AuditLog:** `npm run contracts:deploy:mesh:shannon` from repo root ([`contracts/script/deploy-mesh-shannon.sh`](contracts/script/deploy-mesh-shannon.sh), **30M gas / tx**).
+**Deploy registry + AuditLog:** `npm run contracts:deploy:mesh:shannon` from repo root ([`backend/contracts/script/deploy-mesh-shannon.sh`](backend/contracts/script/deploy-mesh-shannon.sh), **30M gas / tx**).
 
 Set `WORKFLOW_REGISTRY_ADDRESS` in [`backend/env.example`](backend/env.example) / `.env` to the registry above. Set **`DEMO_TRIGGER_EMITTER`** to the demo emitter so `/demo` and `POST /chain/ping` stay aligned with indexed workflows without redeploying a new emitter each time.
 
@@ -51,7 +51,7 @@ Set `WORKFLOW_REGISTRY_ADDRESS` in [`backend/env.example`](backend/env.example) 
    - Short path: **`/`** → click **Live demo (testnet)** → **`/demo`** → **Ping (on-chain)** → watch **evaluation** (Demo 1) + **trace** → **Open full monitor →** for registry/DSL detail → **All workflows** → **`/workflows`** → click a card → **`/workflows/build`** via **Create Workflow** if you want to show the builder.
 
 5. **Optional deep cuts**  
-   - **`mesh-cli` validate/compile/deploy-dsl** · Explorer links from [`shannon-demo.json`](contracts/deployments/shannon-demo.json).
+   - **`mesh-cli` validate/compile/deploy-dsl** · Explorer links from [`shannon-demo.json`](backend/contracts/deployments/shannon-demo.json).
 
 6. **Recorded walkthrough**  
    - Shot list: [`docs/demo-video-flow.md`](docs/demo-video-flow.md).
@@ -107,9 +107,9 @@ flowchart LR
 ```
 
 1. **Define** a workflow as JSON (DSL): validate, **compile** to an executor plan, or **deploy from definition** (one executor + root subscription + registry). The demo path still deploys fixed demo contracts for quick Shannon tests.
-2. **Deploy** per-step contracts that inherit [`SomniaEventHandler`](https://www.npmjs.com/package/@somnia-chain/reactivity-contracts) (Mesh wraps this in [`WorkflowNode`](contracts/src/WorkflowNode.sol)).
+2. **Deploy** per-step contracts that inherit [`SomniaEventHandler`](https://www.npmjs.com/package/@somnia-chain/reactivity-contracts) (Mesh wraps this in [`WorkflowNode`](backend/contracts/src/WorkflowNode.sol)).
 3. **Subscribe** each reactive step on-chain with the Reactivity SDK (`createSoliditySubscription`, BlockTick helpers, etc.) so the precompile invokes your handler when filters match.
-4. **Register** node addresses + subscription ids in [`WorkflowRegistry`](contracts/src/WorkflowRegistry.sol) for discovery and lifecycle.
+4. **Register** node addresses + subscription ids in [`WorkflowRegistry`](backend/contracts/src/WorkflowRegistry.sol) for discovery and lifecycle.
 5. **Observe** execution: handlers emit `WorkflowStepExecuted` / `WorkflowNoOp`; the backend can open a **wildcard** `sdk.subscribe` and forward pushes to the UI over `/ws/trace`.
 
 ---
@@ -120,7 +120,7 @@ This table mirrors PRD §2 and maps **Somnia’s primitives** to **Mesh componen
 
 | Somnia Reactivity capability | Where Mesh uses it | What it enables |
 | ---------------------------- | ------------------ | --------------- |
-| **`SomniaEventHandler` / `_onEvent`** | [`WorkflowNode`](contracts/src/WorkflowNode.sol), [`MeshEventWorkflowNode`](contracts/src/demo/MeshEventWorkflowNode.sol) | Validator-driven handler code in Solidity when a subscription fires—no bot. |
+| **`SomniaEventHandler` / `_onEvent`** | [`WorkflowNode`](backend/contracts/src/WorkflowNode.sol), [`MeshEventWorkflowNode`](backend/contracts/src/demo/MeshEventWorkflowNode.sol) | Validator-driven handler code in Solidity when a subscription fires—no bot. |
 | **`createSoliditySubscription` (SDK)** | [`deployDemoWorkflow`](backend/src/services/deployDemoWorkflow.ts) | Bind emitter + topic filters to a handler contract; Mesh records returned subscription id on the registry. |
 | **`createOnchainBlockTickSubscription`** | [`subscriptionFromTrigger`](backend/src/compiler/subscriptionFromTrigger.ts) (DSL `cron:block`) | Triggers on `BlockTick` system events (every block or specific block). |
 | **`scheduleOnchainCronJob`** | [`subscriptionFromTrigger`](backend/src/compiler/subscriptionFromTrigger.ts) (DSL `cron:timestamp`) | One-shot `Schedule` subscription at a future unix **ms** timestamp. |
@@ -140,10 +140,8 @@ This table mirrors PRD §2 and maps **Somnia’s primitives** to **Mesh componen
 
 | Path | Role |
 | ---- | ---- |
-| [`contracts/`](contracts/) | Foundry: `WorkflowRegistry`, `WorkflowNode`, `MeshWorkflowExecutor`, `AuditLog`, Shannon demo (`TriggerEmitter`, `ReactionSink`, `MeshEventWorkflowNode`). |
-| [`backend/`](backend/) | Fastify API, Reactivity SDK wiring, deploy/pause/delete, DSL types + DAG validation, workflow index (`data/workflows-index.json`), WebSocket `/ws/trace`, scripts (`e2e:shannon`, `deploy:registry`, `mesh` CLI). |
+| [`backend/`](backend/) | **Self-contained deploy unit:** Fastify API, Reactivity SDK wiring, DSL + validation, workflow index (`data/workflows-index.json`), WebSocket `/ws/trace`, scripts (`e2e:shannon`, `deploy:registry`, `mesh` CLI). Includes **`backend/contracts/`** (Foundry) and **`backend/templates/`** (demo workflow JSON). |
 | [`frontend/`](frontend/) | Next.js dashboard: workflow list, detail + live trace, **visual workflow builder** (`/workflows/build`). |
-| [`templates/`](templates/) | **`demo-01-hybrid-executor`**, **`demo-02-fanout-pipeline`** for `mesh init` / `validate` / `deploy-dsl`. |
 | [`docs/`](docs/) | PRD, feasibility, imported Somnia / Foundry docs. |
 
 ---
@@ -159,7 +157,7 @@ This table mirrors PRD §2 and maps **Somnia’s primitives** to **Mesh componen
 | Workflow list (indexed file) | Done |
 | Wildcard trace WebSocket to browsers | Done (`/ws/trace`) |
 | DSL types + DAG validation API | Done (`POST /workflows/validate`, `forCompiler: true` for compiler rules) |
-| v1 compiler (executor bytecode + root subscription) | Done — [`MeshWorkflowExecutor`](contracts/src/compiler/MeshWorkflowExecutor.sol), [`compileWorkflow`](backend/src/compiler/compileWorkflow.ts), `POST /workflows/compile`, `POST /workflows/from-definition` |
+| v1 compiler (executor bytecode + root subscription) | Done — [`MeshWorkflowExecutor`](backend/contracts/src/compiler/MeshWorkflowExecutor.sol), [`compileWorkflow`](backend/src/compiler/compileWorkflow.ts), `POST /workflows/compile`, `POST /workflows/from-definition` |
 | CLI `mesh` | Done — includes `validate --compiler`, `compile`, `deploy-dsl` |
 | Dashboard | Done — list + detail, stored DSL (compiled deploys), trace decode + **WS `workflowId` filter**, **visual builder** at `/workflows/build` ([`docs/workflow-builder.md`](docs/workflow-builder.md)) |
 | `emit` in compiled executor (`LOG1` + `WorkflowStepExecuted`) | Done — [`docs/compiler-emit.md`](docs/compiler-emit.md) |
@@ -178,7 +176,7 @@ The compiler turns a **validated** [`WorkflowDefinition`](backend/src/dsl/types.
 
 **v1 limits** (on-chain): [`validateForCompiler`](backend/src/compiler/validateForCompiler.ts) — single root, reachable DAG, **`emit`**, no `condition` / `ethCalls` *in bytecode* (those fields are **stripped** before compile). **Hybrid:** root-only `ethCalls` + optional `condition` for **off-chain** evaluation (see below); graph size capped (≤255 steps, `uint8` edges).
 
-Canonical UI / Shannon demos: [`templates/demo-01-hybrid-executor.workflow.json`](templates/demo-01-hybrid-executor.workflow.json) (hybrid + emit), [`templates/demo-02-fanout-pipeline.workflow.json`](templates/demo-02-fanout-pipeline.workflow.json) (fan-out).
+Canonical UI / Shannon demos: [`backend/templates/demo-01-hybrid-executor.workflow.json`](backend/templates/demo-01-hybrid-executor.workflow.json) (hybrid + emit), [`backend/templates/demo-02-fanout-pipeline.workflow.json`](backend/templates/demo-02-fanout-pipeline.workflow.json) (fan-out).
 
 **API**
 
@@ -195,7 +193,7 @@ npm run mesh -- deploy-dsl --file workflows/demo-01-hybrid-executor.workflow.jso
 npm run mesh -- deploy-dsl --file workflows/demo-02-fanout-pipeline.workflow.json --fanout
 ```
 
-`mesh init` copies both demo templates into `workflows/`: [`demo-01-hybrid-executor.workflow.json`](templates/demo-01-hybrid-executor.workflow.json), [`demo-02-fanout-pipeline.workflow.json`](templates/demo-02-fanout-pipeline.workflow.json).
+`mesh init` copies both demo templates into `workflows/` from [`backend/templates/`](backend/templates/).
 
 ---
 
@@ -204,7 +202,7 @@ npm run mesh -- deploy-dsl --file workflows/demo-02-fanout-pipeline.workflow.jso
 ### 1. Contracts
 
 ```bash
-cd contracts && npm install && forge build && forge test
+cd backend/contracts && npm install && forge build && forge test
 ```
 
 ### 2. Backend
@@ -257,7 +255,7 @@ Open [http://localhost:3000](http://localhost:3000) → **`/demo`** for the guid
 
 ```bash
 cd backend && npm run e2e:shannon
-# Optional: deploy from templates/demo-01-hybrid-executor.workflow.json (set E2E_EMITTER to real TriggerEmitter)
+# Optional: deploy from backend/templates/demo-01-hybrid-executor.workflow.json (set E2E_EMITTER to real TriggerEmitter)
 npm run e2e:compiled
 ```
 
@@ -270,11 +268,11 @@ Requires registry + funded key per Somnia reactivity rules (see [`backend/src/se
 From the repository root (requires [Foundry](https://book.getfoundry.sh/) on `PATH`):
 
 ```bash
-npm run contracts:build   # forge build in contracts/
+npm run contracts:build   # forge build in backend/contracts/
 npm run build:all         # contracts + backend tsc + frontend next build
 ```
 
-**Contract tests:** Foundry tests live under [`contracts/test/`](contracts/test/) (`WorkflowRegistry`, `MeshWorkflowExecutor`, `AuditLog`, `MeshSimpleStepNode`). The [`TestWorkflowNode`](contracts/test/mocks/TestWorkflowNode.sol) mock is required by registry tests — do not remove. If Forge warns about missing stale artifacts, run `cd contracts && forge clean && forge build`.
+**Contract tests:** Foundry tests live under [`backend/contracts/test/`](backend/contracts/test/) (`WorkflowRegistry`, `MeshWorkflowExecutor`, `AuditLog`, `MeshSimpleStepNode`). The [`TestWorkflowNode`](backend/contracts/test/mocks/TestWorkflowNode.sol) mock is required by registry tests — do not remove. If Forge warns about missing stale artifacts, run `cd backend/contracts && forge clean && forge build`.
 
 ## Further reading
 
@@ -288,7 +286,7 @@ npm run build:all         # contracts + backend tsc + frontend next build
 - [`docs/demo-ui-walkthrough.md`](docs/demo-ui-walkthrough.md) — **beginner UI tour (every click) + pitch example**  
 - [`docs/mesh_prd.md`](docs/mesh_prd.md) — full PRD  
 - [`docs/feasibility.md`](docs/feasibility.md) — feasibility notes  
-- [`contracts/README.md`](contracts/README.md) — contract-specific deploy commands  
+- [`backend/contracts/README.md`](backend/contracts/README.md) — contract-specific deploy commands  
 - Somnia reactivity docs in-repo: [`docs/somnia-reactivity-docs/`](docs/somnia-reactivity-docs/)
 
 ---

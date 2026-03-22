@@ -14,7 +14,7 @@ Use this as a shot list for a **5–8 minute** screen recording. Target audience
 
 ### 2. Contracts & addresses (45–60s)
 
-- Show [`contracts/deployments/shannon-demo.json`](../contracts/deployments/shannon-demo.json) or README table.
+- Show [`backend/contracts/deployments/shannon-demo.json`](../backend/contracts/deployments/shannon-demo.json) or README table.
 - Call out: **WorkflowRegistry**, **AuditLog** (governance-style), **TriggerEmitter** (demo signal), **MeshWorkflowExecutor** (demo 1), **MeshSimpleStepNode** ×3 (demo 2 after full bootstrap).
 - Optional: open [Shannon explorer](https://shannon-explorer.somnia.network/) on registry + executor.
 

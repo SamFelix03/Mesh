@@ -70,7 +70,7 @@ async function main() {
     const dir = workflowsDir();
     mkdirSync(dir, { recursive: true });
     const backendRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-    const templatesRoot = join(backendRoot, "..", "templates");
+    const templatesRoot = join(backendRoot, "templates");
     const pairs = [
       ["demo-01-hybrid-executor.workflow.json", "demo-01-hybrid-executor.workflow.json"],
       ["demo-02-fanout-pipeline.workflow.json", "demo-02-fanout-pipeline.workflow.json"],

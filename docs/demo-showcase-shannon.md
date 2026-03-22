@@ -1,12 +1,12 @@
 # Shannon demo: full showcase workflow
 
-This walkthrough matches [`templates/demo-01-hybrid-executor.workflow.json`](../templates/demo-01-hybrid-executor.workflow.json) (id `mesh-showcase-shannon`): **event subscription**, **hybrid `ethCalls` + `simulationResults`**, **on-chain `emit`**, and **trace + evaluation** WebSockets. Add [`demo-02-fanout-pipeline`](../templates/demo-02-fanout-pipeline.workflow.json) for per-node fan-out.
+This walkthrough matches [`backend/templates/demo-01-hybrid-executor.workflow.json`](../backend/templates/demo-01-hybrid-executor.workflow.json) (id `mesh-showcase-shannon`): **event subscription**, **hybrid `ethCalls` + `simulationResults`**, **on-chain `emit`**, and **trace + evaluation** WebSockets. Add [`demo-02-fanout-pipeline`](../backend/templates/demo-02-fanout-pipeline.workflow.json) for per-node fan-out.
 
 ## Prerequisites
 
-- **Contracts:** `WorkflowRegistry` + (optional) `AuditLog` deployed on Shannon — see the README table *Shannon testnet — deployed Mesh contracts* and [`contracts/script/deploy-mesh-shannon.sh`](../contracts/script/deploy-mesh-shannon.sh) (fixed high gas per tx).
-- **Fast path:** from `backend/` run `npm run demo:bootstrap:shannon` (uses `WORKFLOW_REGISTRY_ADDRESS` + `PRIVATE_KEY` from `.env`). Addresses are written to [`contracts/deployments/shannon-demo.json`](../contracts/deployments/shannon-demo.json).
-- **TriggerEmitter:** deploy the version with `pingCount()` (same `Ping(uint256)` topic as before). From `contracts/`:
+- **Contracts:** `WorkflowRegistry` + (optional) `AuditLog` deployed on Shannon — see the README table *Shannon testnet — deployed Mesh contracts* and [`backend/contracts/script/deploy-mesh-shannon.sh`](../backend/contracts/script/deploy-mesh-shannon.sh) (fixed high gas per tx).
+- **Fast path:** from `backend/` run `npm run demo:bootstrap:shannon` (uses `WORKFLOW_REGISTRY_ADDRESS` + `PRIVATE_KEY` from `.env`). Addresses are written to [`backend/contracts/deployments/shannon-demo.json`](../backend/contracts/deployments/shannon-demo.json).
+- **TriggerEmitter:** deploy the version with `pingCount()` (same `Ping(uint256)` topic as before). From `backend/contracts/`:
 
   ```bash
   forge create src/demo/TriggerEmitter.sol:TriggerEmitter \
@@ -31,7 +31,7 @@ Use the Workflow Manager API or CLI, for example:
 
 ```bash
 # from backend/ with API running and env loaded (paths relative to backend/)
-npx tsx scripts/mesh-cli.ts deploy-dsl --file ../templates/demo-01-hybrid-executor.workflow.json
+npx tsx scripts/mesh-cli.ts deploy-dsl --file templates/demo-01-hybrid-executor.workflow.json
 # or POST /workflows/from-definition with the JSON body
 ```
 

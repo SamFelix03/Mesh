@@ -3,8 +3,8 @@
   "private": true,
   "description": "Mesh — reactive workflows on Somnia Shannon",
   "scripts": {
-    "contracts:build": "cd contracts && forge build",
-    "contracts:deploy:mesh:shannon": "bash contracts/script/deploy-mesh-shannon.sh",
+    "contracts:build": "cd backend/contracts && forge build",
+    "contracts:deploy:mesh:shannon": "bash backend/contracts/script/deploy-mesh-shannon.sh",
     "build:all": "npm run contracts:build && cd backend && npm run build && cd ../frontend && npm run build"
   }
 }

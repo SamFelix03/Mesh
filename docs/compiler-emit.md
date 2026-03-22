@@ -21,7 +21,7 @@ The executor step still runs **`WorkflowStepExecuted`** after the optional `call
 
 ## Solidity reference
 
-Source: [`contracts/src/compiler/MeshWorkflowExecutor.sol`](../contracts/src/compiler/MeshWorkflowExecutor.sol).
+Source: [`backend/contracts/src/compiler/MeshWorkflowExecutor.sol`](../backend/contracts/src/compiler/MeshWorkflowExecutor.sol).
 
 - `Step.logTopic0` — `bytes32`; zero means “not an emit step”.
 - Non-zero `logTopic0` → `assembly { log1(ptr, len, topic0) }` on the **memory copy** of `Step.data`.
@@ -70,8 +70,8 @@ const payload = encodeAbiParameters(parseAbiParameters("uint256 value"), [42n]);
 
 ```bash
 cd backend
-npm run mesh -- validate --file ../templates/demo-01-hybrid-executor.workflow.json --compiler --hybrid
-npm run mesh -- compile --file ../templates/demo-01-hybrid-executor.workflow.json
+npm run mesh -- validate --file templates/demo-01-hybrid-executor.workflow.json --compiler --hybrid
+npm run mesh -- compile --file templates/demo-01-hybrid-executor.workflow.json
 ```
 
 ---
@@ -93,5 +93,5 @@ npm run mesh -- compile --file ../templates/demo-01-hybrid-executor.workflow.jso
 
 ## Testing
 
-Foundry: [`contracts/test/MeshWorkflowExecutor.t.sol`](../contracts/test/MeshWorkflowExecutor.t.sol) (`test_emit_step_emits_log1`).  
+Foundry: [`backend/contracts/test/MeshWorkflowExecutor.t.sol`](../backend/contracts/test/MeshWorkflowExecutor.t.sol) (`test_emit_step_emits_log1`).  
 `onEvent` is gated to `msg.sender == 0x0100`; the test uses `vm.prank(SomniaExtensions.SOMNIA_REACTIVITY_PRECOMPILE_ADDRESS)`.

@@ -1,5 +1,6 @@
 node_modules/
-out/
+# Scope to repo root so `backend/contracts/out` (Forge artifacts for the API) is not ignored
+/out/
 cache/
 broadcast/
 .env

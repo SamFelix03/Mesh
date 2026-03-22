@@ -8,7 +8,7 @@ Engineering inventory: what exists, how it maps to the PRD ([`mesh_prd.md`](mesh
 
 ## 1. What is implemented today
 
-### 1.1 Smart contracts (`contracts/`)
+### 1.1 Smart contracts (`backend/contracts/`)
 
 | Piece | Role |
 | ----- | ---- |
@@ -46,11 +46,11 @@ Engineering inventory: what exists, how it maps to the PRD ([`mesh_prd.md`](mesh
 
 ### 1.4 Templates & docs
 
-- [`templates/demo-01-hybrid-executor.workflow.json`](../templates/demo-01-hybrid-executor.workflow.json) — hybrid + **`emit`** (`mesh-showcase-shannon`).  
-- [`templates/demo-02-fanout-pipeline.workflow.json`](../templates/demo-02-fanout-pipeline.workflow.json) — per-node fan-out pipeline.  
+- [`backend/templates/demo-01-hybrid-executor.workflow.json`](../backend/templates/demo-01-hybrid-executor.workflow.json) — hybrid + **`emit`** (`mesh-showcase-shannon`).  
+- [`backend/templates/demo-02-fanout-pipeline.workflow.json`](../backend/templates/demo-02-fanout-pipeline.workflow.json) — per-node fan-out pipeline.  
 - [`docs/compiler-emit.md`](compiler-emit.md) — **`emit`** reference.
 - Root [`README.md`](../README.md) — product + quick start.
-- [`contracts/README.md`](../contracts/README.md) — contract roles + deploy.
+- [`backend/contracts/README.md`](../backend/contracts/README.md) — contract roles + deploy.
 
 ---
 

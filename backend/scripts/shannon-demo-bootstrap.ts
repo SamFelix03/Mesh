@@ -24,8 +24,8 @@ loadBackendEnv();
 
 const DEMO_IDS = new Set(["mesh-showcase-shannon", "mesh-demo-fanout-shannon"]);
 
-function repoRoot(): string {
-  return join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+function backendPackageRoot(): string {
+  return join(dirname(fileURLToPath(import.meta.url)), "..");
 }
 
 function deployGas(): bigint {
@@ -113,7 +113,7 @@ async function deployHybrid(emitter: Address, previous: IndexedWorkflow | undefi
 }
 
 async function deployFanout(emitter: Address, previous: IndexedWorkflow | undefined): Promise<IndexedWorkflow> {
-  const path = join(repoRoot(), "templates", "demo-02-fanout-pipeline.workflow.json");
+  const path = join(backendPackageRoot(), "templates", "demo-02-fanout-pipeline.workflow.json");
   const def = injectEmitter(path, emitter);
   try {
     const result = await deployPerNodeFanoutWorkflow(def);
@@ -171,7 +171,7 @@ async function main() {
   writeFileSync(indexPath, JSON.stringify({ workflows: merged }, (_, v) => (typeof v === "bigint" ? v.toString() : v), 2));
   console.log("\nWrote index:", indexPath);
 
-  const deploymentDir = join(repoRoot(), "contracts", "deployments");
+  const deploymentDir = join(backendPackageRoot(), "contracts", "deployments");
   mkdirSync(deploymentDir, { recursive: true });
   const deploymentPath = join(deploymentDir, "shannon-demo.json");
   writeFileSync(

@@ -1,5 +1,5 @@
 /**
- * One-shot: deploy `MeshWorkflowExecutor` + root subscription from `templates/demo-01-hybrid-executor.workflow.json`
+ * One-shot: deploy `MeshWorkflowExecutor` + root subscription from `backend/templates/demo-01-hybrid-executor.workflow.json`
  * (unique DSL id per run). Requires same env as `e2e-shannon.ts`.
  *
  *   cd backend && npx tsx scripts/e2e-compiled-deploy.ts
@@ -16,7 +16,7 @@ import { deployCompiledWorkflow } from "../src/services/deployCompiledWorkflow.j
 async function main() {
   loadBackendEnv();
   const here = dirname(fileURLToPath(import.meta.url));
-  const path = join(here, "..", "..", "templates", "demo-01-hybrid-executor.workflow.json");
+  const path = join(here, "..", "templates", "demo-01-hybrid-executor.workflow.json");
   let def = JSON.parse(readFileSync(path, "utf8")) as WorkflowDefinition;
   const em = process.env.E2E_EMITTER?.trim();
   if (em && isAddress(em)) {

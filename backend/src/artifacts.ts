@@ -10,10 +10,10 @@ type ForgeArtifact = {
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-/** Repo `contracts/` directory (mesh-somnia/contracts). */
+/** Backend package `contracts/` directory (Forge `out/`). Override with `CONTRACTS_ROOT` for custom layouts. */
 export function contractsRootDir(): string {
   if (process.env.CONTRACTS_ROOT) return process.env.CONTRACTS_ROOT;
-  return join(here, "..", "..", "contracts");
+  return join(here, "..", "contracts");
 }
 
 function readArtifact(relativePathFromOut: string): ForgeArtifact {
@@ -25,7 +25,7 @@ function readArtifact(relativePathFromOut: string): ForgeArtifact {
     const err = e as NodeJS.ErrnoException;
     if (err.code === "ENOENT") {
       throw new Error(
-        `Missing Forge artifact at ${path} — run \`cd contracts && forge build\` (CONTRACTS_ROOT=${contractsRootDir()})`,
+        `Missing Forge artifact at ${path} — run \`cd backend/contracts && forge build\` (CONTRACTS_ROOT=${contractsRootDir()})`,
       );
     }
     throw e;

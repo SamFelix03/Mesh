@@ -4,7 +4,7 @@
  *   cd backend && npx tsx scripts/e2e-shannon.ts
  *
  * Requires: `WORKFLOW_REGISTRY_ADDRESS`, `PRIVATE_KEY` (STT for gas; reactivity min balance per Somnia docs),
- * and `forge build` in ../contracts.
+ * and `forge build` in ./contracts (under `backend/`).
  *
  * Deploy registry first: `npx tsx scripts/deploy-registry.ts` or `forge script ... DeployMesh.s.sol`.
  */

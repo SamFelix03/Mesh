@@ -9,7 +9,7 @@ Besides the default **single `MeshWorkflowExecutor` + one root subscription**, M
 
 ## Contract
 
-- **`MeshSimpleStepNode`** ([`contracts/src/compiler/MeshSimpleStepNode.sol`](../contracts/src/compiler/MeshSimpleStepNode.sol)) — implements one step: optional external `call`, optional `LOG1` emit, then `WorkflowStepExecuted`. Constructor takes target, calldata, log topic, and next-step routing metadata the deployer wires consistently with the compiled plan.
+- **`MeshSimpleStepNode`** ([`backend/contracts/src/compiler/MeshSimpleStepNode.sol`](../backend/contracts/src/compiler/MeshSimpleStepNode.sol)) — implements one step: optional external `call`, optional `LOG1` emit, then `WorkflowStepExecuted`. Constructor takes target, calldata, log topic, and next-step routing metadata the deployer wires consistently with the compiled plan.
 
 ## Backend
 
