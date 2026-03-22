@@ -18,15 +18,17 @@ type Wf = {
   /** Executor or step contract(s) — used to HTTP-backfill `WorkflowStepExecuted` after Ping. */
   workflowNode?: string;
   nodeAddresses?: string[];
-  definition?: { nodes?: { id: string }[] };
+  definition?: { nodes?: { id: string; name?: string }[] };
 };
 
 type Props = {
   workflows: Wf[];
-  /** Shared Ping emitter (same for both demos after bootstrap). */
+  /** Shared Ping emitter (from any indexed workflow that has a non-zero emitter). */
   emitter: string | null;
   hybrid: Wf | null;
   fanout: Wf | null;
+  /** Indexed workflows other than the two Shannon bootstrap ids — shown with their own trace cards. */
+  extraWorkflows: Wf[];
 };
 
 function httpTraceContractsFor(wf: Wf): string | undefined {
@@ -36,7 +38,7 @@ function httpTraceContractsFor(wf: Wf): string | undefined {
   return undefined;
 }
 
-export function DemoExperience({ workflows, emitter, hybrid, fanout }: Props) {
+export function DemoExperience({ workflows, emitter, hybrid, fanout, extraWorkflows }: Props) {
   const [pingMsg, setPingMsg] = useState<string | null>(null);
   const [pingBusy, setPingBusy] = useState(false);
   const [pingPullNonce, setPingPullNonce] = useState(0);
@@ -69,15 +71,27 @@ export function DemoExperience({ workflows, emitter, hybrid, fanout }: Props) {
     }
   }, [emitter]);
 
-  if (workflows.length === 0 || !emitter || (!hybrid && !fanout)) {
+  if (workflows.length === 0 || !emitter) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-8 dark:border-amber-900/50 dark:bg-amber-950/30">
         <h2 className="text-lg font-semibold text-amber-950 dark:text-amber-100">Demo data not loaded</h2>
         <p className="mt-2 text-sm text-amber-900/80 dark:text-amber-200/90">
-          The API returned no indexed workflows, or the expected demo ids are missing. From the repo run{" "}
-          <code className="rounded bg-black/10 px-1 dark:bg-black/30">cd backend && npm run demo:bootstrap:shannon</code>{" "}
-          (after registry + <code className="rounded bg-black/10 px-1">PRIVATE_KEY</code> in <code className="rounded bg-black/10 px-1">backend/.env</code>), ensure{" "}
+          The API returned no indexed workflows, or no row has a non-zero <code className="rounded bg-black/10 px-1 dark:bg-black/30">emitter</code> (needed for Ping).
+          Bootstrap with{" "}
+          <code className="rounded bg-black/10 px-1 dark:bg-black/30">cd backend && npm run demo:bootstrap:shannon</code> or deploy from the builder, ensure{" "}
           <code className="rounded bg-black/10 px-1">NEXT_PUBLIC_MESH_API</code> points at this backend, then refresh.
+        </p>
+      </div>
+    );
+  }
+
+  if (!hybrid && !fanout && extraWorkflows.length === 0) {
+    return (
+      <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-8 dark:border-amber-900/50 dark:bg-amber-950/30">
+        <h2 className="text-lg font-semibold text-amber-950 dark:text-amber-100">No workflows to show</h2>
+        <p className="mt-2 text-sm text-amber-900/80 dark:text-amber-200/90">
+          Nothing in the index except entries that were filtered out, or bootstrap demos are missing and you have no other workflows. Deploy a workflow and ensure it appears in{" "}
+          <code className="rounded bg-black/10 px-1 dark:bg-black/30">GET /workflows</code>.
         </p>
       </div>
     );
@@ -93,9 +107,10 @@ export function DemoExperience({ workflows, emitter, hybrid, fanout }: Props) {
               Fire a test Ping
             </h2>
             <p className="mt-1 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
-              Both demos listen for <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">Ping(uint256)</code> on this emitter. The backend
-              submits <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">POST /chain/ping</code> using its wallet (needs{" "}
-              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">PRIVATE_KEY</code>).
+              Workflows on this page listen for <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">Ping(uint256)</code> on this emitter (same topic as the
+              bootstrap templates). The backend submits <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">POST /chain/ping</code> (needs{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">PRIVATE_KEY</code>). Your UI-deployed workflow must use this emitter address in its root
+              trigger.
             </p>
             <code className="mt-3 block break-all rounded-lg bg-zinc-100 px-3 py-2 text-xs text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">{emitter}</code>
           </div>
@@ -117,28 +132,67 @@ export function DemoExperience({ workflows, emitter, hybrid, fanout }: Props) {
         </p>
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <DemoCard
-          title="Demo 1 — Hybrid executor"
-          subtitle="Single MeshWorkflowExecutor: subscription + ethCalls + condition + emit. Evaluation stream (green) when EVALUATION_ENGINE=1."
-          wf={hybrid}
-          traceId={hybrid?.workflowId}
-          showEval={hybrid?.hybridEvaluation === true}
-          httpTraceContracts={hybrid ? httpTraceContractsFor(hybrid) : undefined}
-          httpPullNonce={pingPullNonce}
-          httpAnchorBlock={pingAnchorBlock}
-        />
-        <DemoCard
-          title="Demo 2 — Per-node fan-out"
-          subtitle="Three MeshSimpleStepNode contracts, three subscriptions, same Ping filter. Trace shows activity across workflow-scoped streams."
-          wf={fanout}
-          traceId={fanout?.workflowId}
-          showEval={false}
-          httpTraceContracts={fanout ? httpTraceContractsFor(fanout) : undefined}
-          httpPullNonce={pingPullNonce}
-          httpAnchorBlock={pingAnchorBlock}
-        />
-      </div>
+      {(hybrid || fanout) && (
+        <div className="grid gap-8 lg:grid-cols-2">
+          {hybrid ? (
+            <DemoCard
+              title="Demo 1 — Hybrid executor"
+              subtitle="Single MeshWorkflowExecutor: subscription + ethCalls + condition + emit. Evaluation stream (green) when EVALUATION_ENGINE=1."
+              wf={hybrid}
+              traceId={hybrid.workflowId}
+              showEval={hybrid.hybridEvaluation === true}
+              httpTraceContracts={httpTraceContractsFor(hybrid)}
+              httpPullNonce={pingPullNonce}
+              httpAnchorBlock={pingAnchorBlock}
+            />
+          ) : (
+            <div className="rounded-2xl border border-dashed border-zinc-300 p-6 text-sm text-zinc-500 dark:border-zinc-600">
+              Demo 1 (mesh-showcase-shannon) — not in index.
+            </div>
+          )}
+          {fanout ? (
+            <DemoCard
+              title="Demo 2 — Per-node fan-out"
+              subtitle="Three MeshSimpleStepNode contracts, three subscriptions, same Ping filter. Trace shows activity across workflow-scoped streams."
+              wf={fanout}
+              traceId={fanout.workflowId}
+              showEval={false}
+              httpTraceContracts={httpTraceContractsFor(fanout)}
+              httpPullNonce={pingPullNonce}
+              httpAnchorBlock={pingAnchorBlock}
+            />
+          ) : (
+            <div className="rounded-2xl border border-dashed border-zinc-300 p-6 text-sm text-zinc-500 dark:border-zinc-600">
+              Demo 2 (mesh-demo-fanout-shannon) — not in index.
+            </div>
+          )}
+        </div>
+      )}
+
+      {extraWorkflows.length > 0 ? (
+        <section className="flex flex-col gap-6">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Your other indexed workflows</h2>
+          <p className="-mt-2 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
+            Each card filters trace lines by that workflow&apos;s <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">workflowId</code>. After Ping, HTTP
+            backfill scans the executor / step contracts from the index.
+          </p>
+          <div className="grid gap-8 lg:grid-cols-2">
+            {extraWorkflows.map((w) => (
+              <DemoCard
+                key={w.workflowStringId}
+                title={w.name?.trim() || w.workflowStringId}
+                subtitle={`Open full monitor for DSL and registry detail. Hybrid: ${w.hybridEvaluation ? "yes" : "no"} · ${w.deployMode ?? "executor"}`}
+                wf={w}
+                traceId={w.workflowId}
+                showEval={w.hybridEvaluation === true}
+                httpTraceContracts={httpTraceContractsFor(w)}
+                httpPullNonce={pingPullNonce}
+                httpAnchorBlock={pingAnchorBlock}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-6 dark:border-zinc-800 dark:bg-zinc-900/40 md:p-8">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">End-user path (deployed frontend)</h2>

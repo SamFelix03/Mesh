@@ -1,0 +1,17 @@
+{
+  "id": "mesh-ui-demo-ping-single-noop",
+  "name": "UI demo — single executor step on Ping (noop, trace only)",
+  "nodes": [
+    {
+      "id": "on_ping",
+      "name": "Run once per Ping",
+      "trigger": {
+        "type": "event",
+        "emitter": "0x1111111111111111111111111111111111111111",
+        "eventTopic0": "0x48257dc961b6f792c2b78a080dacfed693b660960a702de21cee364e20270e2f"
+      },
+      "action": { "type": "noop" }
+    }
+  ],
+  "edges": []
+}

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EvalFeed } from "../EvalFeed";
 import { TraceFeed } from "../TraceFeed";
 import { CopyButton } from "./CopyButton";
@@ -115,6 +115,17 @@ function AddressBlock({ address }: { address: string }) {
   );
 }
 
+/** Comma-separated executor / step addresses for HTTP trace backfill (same logic as demo page). */
+function httpTraceContractsForDetail(meta: IndexMeta | null, onChainNodes: string[]): string | undefined {
+  if (meta?.deployMode === "perNodeFanout" && meta.nodeAddresses?.length) {
+    return meta.nodeAddresses.join(",");
+  }
+  if (meta?.workflowNode?.trim()) return meta.workflowNode.trim();
+  const nodes = onChainNodes.filter((a) => /^0x[a-fA-F0-9]{40}$/.test(a.trim()));
+  if (nodes.length) return nodes.join(",");
+  return undefined;
+}
+
 function Badge({ children, tone }: { children: ReactNode; tone: "neutral" | "ok" | "warn" | "brand" }) {
   const tones = {
     neutral: "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200",
@@ -143,6 +154,34 @@ export function WorkflowDetailView({ pageId, data }: { pageId: string; data: OnC
     if (!withId.length) return undefined;
     return buildStepNodeLabelMap(withId);
   }, [meta?.definition]);
+
+  const httpTraceContracts = useMemo(
+    () => httpTraceContractsForDetail(meta, data.nodes),
+    [meta, data.nodes],
+  );
+
+  const [tracePullNonce, setTracePullNonce] = useState(0);
+  const [traceAnchorBlock, setTraceAnchorBlock] = useState<string | null>(null);
+  const [traceRefreshBusy, setTraceRefreshBusy] = useState(false);
+
+  const refreshTraceAnchor = useCallback(async () => {
+    setTraceRefreshBusy(true);
+    try {
+      const r = await fetch(`${meshApiBase()}/chain/head-block`);
+      if (!r.ok) return;
+      const j = (await r.json()) as { blockNumber?: string };
+      if (j.blockNumber) {
+        setTraceAnchorBlock(j.blockNumber);
+        setTracePullNonce((n) => n + 1);
+      }
+    } finally {
+      setTraceRefreshBusy(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshTraceAnchor();
+  }, [refreshTraceAnchor]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 md:py-16">
@@ -433,14 +472,30 @@ export function WorkflowDetailView({ pageId, data }: { pageId: string; data: OnC
 
         <Section
           title="Execution trace (live)"
-          subtitle="Workflow-scoped trace from the backend wildcard subscription. When TRACE_ENGINE=1, firing the root trigger should produce WorkflowStepExecuted / related lines here — proof the reactive path and indexer are wired."
+          subtitle="WebSocket stream when TRACE_ENGINE=1. HTTP backfill queries your executor/step contracts for WorkflowStepExecuted — use Refresh after you ping, or open /demo and ping there (same anchor for all cards)."
         >
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => void refreshTraceAnchor()}
+              disabled={traceRefreshBusy || !httpTraceContracts}
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+              {traceRefreshBusy ? "Refreshing…" : "Refresh trace logs"}
+            </button>
+            {!httpTraceContracts ? (
+              <span className="text-xs text-amber-700 dark:text-amber-300">No contract addresses in index or registry — HTTP backfill unavailable.</span>
+            ) : null}
+          </div>
           <div className="min-h-[16rem]">
             <TraceFeed
               key={`trace-${data.workflowId}`}
               workflowIdBytes32={data.workflowId}
               variant="comfortable"
               stepNodeLabels={stepNodeLabels}
+              httpTraceContracts={httpTraceContracts}
+              httpPullNonce={tracePullNonce}
+              httpAnchorBlock={traceAnchorBlock}
             />
           </div>
         </Section>

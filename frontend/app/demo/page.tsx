@@ -12,8 +12,18 @@ type Row = {
   workflowNode?: string;
   nodeAddresses?: string[];
   /** Present when using `?full=1` — needed to map on-chain step `bytes32` → DSL node `id`. */
-  definition?: { nodes?: { id: string }[] };
+  definition?: { nodes?: { id: string; name?: string }[] };
 };
+
+const BOOTSTRAP_DEMO_IDS = new Set(["mesh-showcase-shannon", "mesh-demo-fanout-shannon"]);
+
+function pickEmitter(workflows: Row[]): string | null {
+  for (const w of workflows) {
+    const e = w.emitter?.trim();
+    if (e && e !== "0x0000000000000000000000000000000000000000") return e;
+  }
+  return null;
+}
 
 async function fetchWorkflows(): Promise<Row[]> {
   const r = await fetch(`${meshApiBase()}/workflows?full=1`, { cache: "no-store" });
@@ -26,12 +36,8 @@ export default async function DemoPage() {
   const workflows = await fetchWorkflows();
   const hybrid = workflows.find((w) => w.workflowStringId === "mesh-showcase-shannon") ?? null;
   const fanout = workflows.find((w) => w.workflowStringId === "mesh-demo-fanout-shannon") ?? null;
-  const emitter =
-    hybrid?.emitter && hybrid.emitter !== "0x0000000000000000000000000000000000000000"
-      ? hybrid.emitter
-      : fanout?.emitter && fanout.emitter !== "0x0000000000000000000000000000000000000000"
-        ? fanout.emitter
-        : null;
+  const emitter = pickEmitter(workflows);
+  const extraWorkflows = workflows.filter((w) => !BOOTSTRAP_DEMO_IDS.has(w.workflowStringId));
 
   return (
     <main className="min-h-screen bg-zinc-50 dark:bg-black">
@@ -55,13 +61,14 @@ export default async function DemoPage() {
         <header className="mt-6 max-w-3xl">
           <h1 className="text-4xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Shannon live demo</h1>
           <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
-            Two production-style workflows on testnet: a <strong>hybrid executor</strong> (ethCalls + evaluation + emit) and a{" "}
-            <strong>per-node fan-out</strong> pipeline. Ping once to drive subscriptions, traces, and (for demo 1) hybrid verdicts.
+            Bootstrap demos (hybrid executor + per-node fan-out) and any <strong>other indexed workflows</strong> that share the same{" "}
+            <code className="rounded bg-zinc-100 px-1 text-sm dark:bg-zinc-900">Ping</code> emitter. Ping once to drive traces; each card filters by its own{" "}
+            <code className="rounded bg-zinc-100 px-1 text-sm dark:bg-zinc-900">workflowId</code>.
           </p>
         </header>
 
         <div className="mt-12">
-          <DemoExperience workflows={workflows} emitter={emitter} hybrid={hybrid} fanout={fanout} />
+          <DemoExperience workflows={workflows} emitter={emitter} hybrid={hybrid} fanout={fanout} extraWorkflows={extraWorkflows} />
         </div>
       </div>
     </main>

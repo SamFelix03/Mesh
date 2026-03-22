@@ -6,6 +6,12 @@ import { pingTriggerEmitter } from "../services/pingEmitter.js";
 import { pullMeshTraceLogs } from "../services/meshTraceLogs.js";
 
 export function registerChainRoutes(app: FastifyInstance) {
+  app.get("/chain/head-block", async () => {
+    const client = createPublicHttpClient();
+    const blockNumber = await client.getBlockNumber();
+    return { blockNumber: blockNumber.toString() };
+  });
+
   app.post<{
     Body: { emitterAddress?: string; seq?: string };
   }>("/chain/ping", async (request, reply) => {

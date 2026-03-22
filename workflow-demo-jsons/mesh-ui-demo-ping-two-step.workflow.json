@@ -1,0 +1,29 @@
+{
+  "id": "mesh-ui-demo-ping-two-step",
+  "name": "UI demo — Ping → two executor hops (noop + noop)",
+  "nodes": [
+    {
+      "id": "first",
+      "name": "First step on Ping",
+      "trigger": {
+        "type": "event",
+        "emitter": "0x1111111111111111111111111111111111111111",
+        "eventTopic0": "0x48257dc961b6f792c2b78a080dacfed693b660960a702de21cee364e20270e2f"
+      },
+      "action": { "type": "noop" }
+    },
+    {
+      "id": "second",
+      "name": "Second step in same run",
+      "trigger": {
+        "type": "event",
+        "emitter": "0x1111111111111111111111111111111111111111",
+        "eventTopic0": "0x48257dc961b6f792c2b78a080dacfed693b660960a702de21cee364e20270e2f"
+      },
+      "action": { "type": "noop" }
+    }
+  ],
+  "edges": [
+    { "from": "first", "to": "second", "label": "chain" }
+  ]
+}
