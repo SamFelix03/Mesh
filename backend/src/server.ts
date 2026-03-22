@@ -9,6 +9,7 @@ import { syncEvaluationSubscriptions } from "./evaluationRuntime.js";
 import { registerChainRoutes } from "./routes/chain.js";
 import { registerWorkflowRoutes } from "./routes/workflows.js";
 import { replyJsonStringify } from "./jsonSafe.js";
+import { runShannonDemoBootstrap } from "./services/shannonDemoBootstrap.js";
 
 export async function buildServer() {
   const app = Fastify({ logger: true });
@@ -34,6 +35,27 @@ export async function buildServer() {
       }
       await syncEvaluationSubscriptions();
       return { ok: true as const };
+    });
+
+    /** Same Shannon demo as `npm run demo:bootstrap:shannon` — writes `data/workflows-index.json` on this host. */
+    app.post("/admin/shannon-demo-bootstrap", async (request, reply) => {
+      const auth = request.headers.authorization ?? "";
+      if (auth !== `Bearer ${adminTok}`) {
+        return reply.code(401).send({ error: "unauthorized" });
+      }
+      if (!process.env.PRIVATE_KEY?.trim()) {
+        return reply.code(503).send({ error: "PRIVATE_KEY is required for bootstrap" });
+      }
+      try {
+        const result = await runShannonDemoBootstrap((msg) => {
+          request.log.info({ bootstrap: true }, msg);
+        });
+        return result;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        request.log.error(e);
+        return reply.code(500).send({ error: msg });
+      }
     });
   }
 
