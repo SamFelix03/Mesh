@@ -2,7 +2,7 @@
 
 **Mesh** is a reactive workflow engine for teams shipping multi-contract automation on **Somnia**. You describe a workflow as a **DAG** (triggers, optional conditions, calls, and emits) in JSON; Mesh **validates and compiles** it, **deploys** `SomniaEventHandler`-based contracts on **Shannon** testnet (chain id `50312`, STT), **registers** them in an on-chain **WorkflowRegistry**, and wires **Reactivity SDK** subscriptions so validators **invoke your handlers** when logs match—no polling bot required. A **Next.js** dashboard lists workflows, streams **live trace** and **hybrid evaluation** over WebSockets, and includes a **visual workflow builder** at `/workflows/build`.
 
-Under the hood, Mesh leans on **`@somnia-chain/reactivity`** (TypeScript SDK for subscribe, subscription CRUD, cron helpers) and **`@somnia-chain/reactivity-contracts`** (Solidity `SomniaEventHandler`). The canonical product spec is [docs/mesh_prd.md](https://github.com/samfelix03/mesh/blob/main/docs/mesh_prd.md).
+Under the hood, Mesh leans on **`@somnia-chain/reactivity`** (TypeScript SDK for subscribe, subscription CRUD, cron helpers) and **`@somnia-chain/reactivity-contracts`** (Solidity `SomniaEventHandler`).
 
 ---
 
@@ -404,14 +404,6 @@ npm run mesh -- deploy --id my-demo-flow
 npm run mesh -- list
 ```
 
-### 4. Frontend
-
-```bash
-cd frontend && cp .env.example .env && npm install && npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) → **`/demo`** for the guided Shannon testnet experience, **Workflows**, or **Create workflow** (`/workflows/build`).
-
 ### 5. Shannon E2E script
 
 ```bash
@@ -423,17 +415,6 @@ npm run e2e:compiled
 Requires registry + funded key per Somnia reactivity rules (see [reactivityBalance.ts](https://github.com/samfelix03/mesh/blob/main/backend/src/services/reactivityBalance.ts)) — **≥ 32 STT** for on-chain subscriptions.
 
 ---
-
-## Monorepo build
-
-From the repository root (requires [Foundry](https://book.getfoundry.sh/) on `PATH`):
-
-```bash
-npm run contracts:build   # forge build in backend/contracts/
-npm run build:all         # contracts + backend tsc + frontend next build
-```
-
-**Contract tests:** Foundry tests live under [backend/contracts/test/](https://github.com/samfelix03/mesh/tree/main/backend/contracts/test) (`WorkflowRegistry`, `MeshWorkflowExecutor`, `AuditLog`, `MeshSimpleStepNode`). The [TestWorkflowNode](https://github.com/samfelix03/mesh/blob/main/backend/contracts/test/mocks/TestWorkflowNode.sol) mock is required by registry tests — do not remove. If Forge warns about missing stale artifacts, run `cd backend/contracts && forge clean && forge build`.
 
 ## Further reading
 
