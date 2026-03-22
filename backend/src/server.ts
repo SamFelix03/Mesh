@@ -36,28 +36,39 @@ export async function buildServer() {
       await syncEvaluationSubscriptions();
       return { ok: true as const };
     });
+  }
 
-    /** Same Shannon demo as `npm run demo:bootstrap:shannon` — writes `data/workflows-index.json` on this host. */
-    app.post("/admin/shannon-demo-bootstrap", async (request, reply) => {
+  /**
+   * Same as `npm run demo:bootstrap:shannon` — writes `data/workflows-index.json` on this host.
+   * If `MESH_ADMIN_TOKEN` is set, require `Authorization: Bearer <token>`. If unset, the route is **unauthenticated**
+   * (convenient for private demos; do not expose a funded `PRIVATE_KEY` on the public internet without a token).
+   */
+  if (!adminTok) {
+    app.log.warn(
+      "MESH_ADMIN_TOKEN unset — POST /admin/shannon-demo-bootstrap accepts unauthenticated requests (uses server PRIVATE_KEY).",
+    );
+  }
+  app.post("/admin/shannon-demo-bootstrap", async (request, reply) => {
+    if (adminTok) {
       const auth = request.headers.authorization ?? "";
       if (auth !== `Bearer ${adminTok}`) {
         return reply.code(401).send({ error: "unauthorized" });
       }
-      if (!process.env.PRIVATE_KEY?.trim()) {
-        return reply.code(503).send({ error: "PRIVATE_KEY is required for bootstrap" });
-      }
-      try {
-        const result = await runShannonDemoBootstrap((msg) => {
-          request.log.info({ bootstrap: true }, msg);
-        });
-        return result;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        request.log.error(e);
-        return reply.code(500).send({ error: msg });
-      }
-    });
-  }
+    }
+    if (!process.env.PRIVATE_KEY?.trim()) {
+      return reply.code(503).send({ error: "PRIVATE_KEY is required for bootstrap" });
+    }
+    try {
+      const result = await runShannonDemoBootstrap((msg) => {
+        request.log.info({ bootstrap: true }, msg);
+      });
+      return result;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      request.log.error(e);
+      return reply.code(500).send({ error: msg });
+    }
+  });
 
   app.get("/ws/trace", { websocket: true }, (connection, req) => {
     const sock = connection.socket;
