@@ -5,12 +5,14 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createWalletClient, getAddress, http, isAddress, zeroAddress, type Address } from "viem";
+import { createWalletClient, getAddress, http, isAddress, zeroAddress, type Address, type Hex } from "viem";
+import { workflowRegistryAbi } from "../abis/workflowRegistry.js";
 import { triggerEmitterArtifact } from "../artifacts.js";
 import type { WorkflowDefinition } from "../dsl/types.js";
 import { definitionForOnChainCompile, needsHybridEvaluation, validateHybridWorkflow } from "../hybridWorkflow.js";
 import { shannonTestnet } from "../shannonChain.js";
 import { createPublicHttpClient, httpRpcUrl, meshContractDeployGas, requireDeployAccount } from "../sdk.js";
+import { workflowIdFromString } from "../workflowId.js";
 import { deployCompiledWorkflow } from "./deployCompiledWorkflow.js";
 import { deployPerNodeFanoutWorkflow } from "./deployPerNodeFanout.js";
 import { getWorkflowIndexFilePath, loadWorkflowIndex, type IndexedWorkflow } from "./workflowIndex.js";
@@ -28,6 +30,96 @@ function deployGas(): bigint {
 
 function isAlreadyRegistered(err: unknown): boolean {
   return err instanceof Error && err.message.includes("already registered");
+}
+
+function registryStatusToIndexed(onChainStatus: number): IndexedWorkflow["status"] {
+  if (onChainStatus === 2) return "paused";
+  if (onChainStatus === 3) return "deleted";
+  return "active";
+}
+
+/** Read registry row for a DSL workflow id (keccak256(string)). */
+async function fetchRegistryRowForDslId(dslId: string): Promise<{
+  workflowId: Hex;
+  nodes: readonly Address[];
+  subscriptionIds: readonly bigint[];
+  onChainStatus: number;
+}> {
+  const raw = process.env.WORKFLOW_REGISTRY_ADDRESS?.trim();
+  if (!raw || !isAddress(raw)) {
+    throw new Error("WORKFLOW_REGISTRY_ADDRESS must be set");
+  }
+  const registry = getAddress(raw);
+  const workflowId = workflowIdFromString(dslId);
+  const publicClient = createPublicHttpClient();
+  const [_owner, status, nodes, subscriptionIds] = await publicClient.readContract({
+    address: registry,
+    abi: workflowRegistryAbi,
+    functionName: "getWorkflow",
+    args: [workflowId],
+  });
+  if (nodes.length === 0) {
+    throw new Error(
+      `Workflow "${dslId}" is not on this registry (${workflowId}) — cannot backfill index from chain`,
+    );
+  }
+  return {
+    workflowId,
+    nodes,
+    subscriptionIds,
+    onChainStatus: Number(status),
+  };
+}
+
+function indexedFromRegistryExecutor(
+  def: WorkflowDefinition,
+  hybrid: boolean,
+  row: Awaited<ReturnType<typeof fetchRegistryRowForDslId>>,
+): IndexedWorkflow {
+  const rootTrigger = def.nodes[0]?.trigger;
+  const emitter = rootTrigger?.type === "event" ? rootTrigger.emitter : zeroAddress;
+  return {
+    workflowStringId: def.id,
+    workflowId: row.workflowId,
+    status: registryStatusToIndexed(row.onChainStatus),
+    emitter,
+    sink: zeroAddress,
+    workflowNode: row.nodes[0]!,
+    subscriptionId: row.subscriptionIds[0]!.toString(),
+    registeredAt: new Date().toISOString(),
+    name: def.name,
+    kind: "compiled",
+    transactionHashes: {},
+    definition: def,
+    hybridEvaluation: hybrid,
+    deployMode: "executor",
+  };
+}
+
+function indexedFromRegistryFanout(
+  def: WorkflowDefinition,
+  row: Awaited<ReturnType<typeof fetchRegistryRowForDslId>>,
+): IndexedWorkflow {
+  const rootTrigger = def.nodes[0]?.trigger;
+  const emitter = rootTrigger?.type === "event" ? rootTrigger.emitter : zeroAddress;
+  return {
+    workflowStringId: def.id,
+    workflowId: row.workflowId,
+    status: registryStatusToIndexed(row.onChainStatus),
+    emitter,
+    sink: zeroAddress,
+    workflowNode: row.nodes[0]!,
+    subscriptionId: row.subscriptionIds[0]!.toString(),
+    subscriptionIds: row.subscriptionIds.map((id) => id.toString()),
+    nodeAddresses: [...row.nodes],
+    registeredAt: new Date().toISOString(),
+    name: def.name,
+    kind: "compiled",
+    transactionHashes: {},
+    definition: def,
+    hybridEvaluation: false,
+    deployMode: "perNodeFanout",
+  };
 }
 
 function injectEmitter(defPath: string, emitter: Address): WorkflowDefinition {
@@ -90,12 +182,9 @@ async function deployHybrid(emitter: Address, previous: IndexedWorkflow | undefi
     };
   } catch (e) {
     if (!isAlreadyRegistered(e)) throw e;
-    if (!previous) {
-      throw new Error(
-        "mesh-showcase-shannon is already on the registry but not in workflows-index.json — fix the index or use a fresh registry",
-      );
-    }
-    return previous;
+    if (previous) return previous;
+    const row = await fetchRegistryRowForDslId(def.id);
+    return indexedFromRegistryExecutor(def, hybrid, row);
   }
 }
 
@@ -125,12 +214,9 @@ async function deployFanout(emitter: Address, previous: IndexedWorkflow | undefi
     };
   } catch (e) {
     if (!isAlreadyRegistered(e)) throw e;
-    if (!previous) {
-      throw new Error(
-        "mesh-demo-fanout-shannon is already on the registry but not in workflows-index.json — fix the index or use a fresh registry",
-      );
-    }
-    return previous;
+    if (previous) return previous;
+    const row = await fetchRegistryRowForDslId(def.id);
+    return indexedFromRegistryFanout(def, row);
   }
 }
 
