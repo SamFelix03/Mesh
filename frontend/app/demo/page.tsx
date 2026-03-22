@@ -9,6 +9,8 @@ type Row = {
   emitter: string;
   hybridEvaluation?: boolean;
   deployMode?: string;
+  workflowNode?: string;
+  nodeAddresses?: string[];
 };
 
 async function fetchWorkflows(): Promise<Row[]> {

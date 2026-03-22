@@ -14,6 +14,9 @@ type Wf = {
   hybridEvaluation?: boolean;
   deployMode?: string;
   emitter: string;
+  /** Executor or step contract(s) — used to HTTP-backfill `WorkflowStepExecuted` after Ping. */
+  workflowNode?: string;
+  nodeAddresses?: string[];
 };
 
 type Props = {
@@ -24,9 +27,18 @@ type Props = {
   fanout: Wf | null;
 };
 
+function httpTraceContractsFor(wf: Wf): string | undefined {
+  if (wf.deployMode === "perNodeFanout" && wf.nodeAddresses?.length)
+    return wf.nodeAddresses.join(",");
+  if (wf.workflowNode) return wf.workflowNode;
+  return undefined;
+}
+
 export function DemoExperience({ workflows, emitter, hybrid, fanout }: Props) {
   const [pingMsg, setPingMsg] = useState<string | null>(null);
   const [pingBusy, setPingBusy] = useState(false);
+  const [pingPullNonce, setPingPullNonce] = useState(0);
+  const [pingAnchorBlock, setPingAnchorBlock] = useState<string | null>(null);
 
   const ping = useCallback(async () => {
     if (!emitter) return;
@@ -38,9 +50,16 @@ export function DemoExperience({ workflows, emitter, hybrid, fanout }: Props) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ emitterAddress: emitter, seq: String(Date.now() % 1_000_000) }),
       });
-      const j = (await r.json().catch(() => ({}))) as { error?: string; txHash?: string };
+      const j = (await r.json().catch(() => ({}))) as {
+        error?: string;
+        txHash?: string;
+        blockNumber?: string;
+      };
       if (!r.ok) throw new Error(j.error ?? r.statusText);
-      setPingMsg(`Submitted · ${j.txHash}`);
+      const blk = j.blockNumber;
+      setPingMsg(blk ? `Submitted · ${j.txHash} · block ${blk}` : `Submitted · ${j.txHash}`);
+      setPingAnchorBlock(blk ?? null);
+      setPingPullNonce((n) => n + 1);
     } catch (e) {
       setPingMsg(e instanceof Error ? e.message : String(e));
     } finally {
@@ -103,6 +122,9 @@ export function DemoExperience({ workflows, emitter, hybrid, fanout }: Props) {
           wf={hybrid}
           traceId={hybrid?.workflowId}
           showEval={hybrid?.hybridEvaluation === true}
+          httpTraceContracts={hybrid ? httpTraceContractsFor(hybrid) : undefined}
+          httpPullNonce={pingPullNonce}
+          httpAnchorBlock={pingAnchorBlock}
         />
         <DemoCard
           title="Demo 2 — Per-node fan-out"
@@ -110,6 +132,9 @@ export function DemoExperience({ workflows, emitter, hybrid, fanout }: Props) {
           wf={fanout}
           traceId={fanout?.workflowId}
           showEval={false}
+          httpTraceContracts={fanout ? httpTraceContractsFor(fanout) : undefined}
+          httpPullNonce={pingPullNonce}
+          httpAnchorBlock={pingAnchorBlock}
         />
       </div>
 
@@ -127,7 +152,8 @@ export function DemoExperience({ workflows, emitter, hybrid, fanout }: Props) {
             Click <strong>Ping</strong> (or use <code className="rounded bg-white px-1 dark:bg-zinc-950">cast</code> above).
           </li>
           <li>
-            Watch <strong>Live trace</strong> panels — requires <code className="rounded bg-white px-1 dark:bg-zinc-950">TRACE_ENGINE=1</code> on the API.
+            Watch <strong>Live trace</strong> — Somnia WebSocket stream needs <code className="rounded bg-white px-1 dark:bg-zinc-950">TRACE_ENGINE=1</code>; after each Ping we also
+            HTTP-pull steps around that block so you still see lines when the push stream is quiet.
           </li>
           <li>
             On Demo 1, watch <strong>Off-chain evaluation</strong> — requires <code className="rounded bg-white px-1 dark:bg-zinc-950">EVALUATION_ENGINE=1</code>.
@@ -144,12 +170,18 @@ function DemoCard({
   wf,
   traceId,
   showEval,
+  httpTraceContracts,
+  httpPullNonce,
+  httpAnchorBlock,
 }: {
   title: string;
   subtitle: string;
   wf: Wf | null;
   traceId?: string;
   showEval: boolean;
+  httpTraceContracts?: string;
+  httpPullNonce: number;
+  httpAnchorBlock: string | null;
 }) {
   if (!wf) {
     return (
@@ -187,7 +219,13 @@ function DemoCard({
       ) : null}
       <div>
         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Live trace</h4>
-        <TraceFeed workflowIdBytes32={traceId} variant="comfortable" />
+        <TraceFeed
+          workflowIdBytes32={traceId}
+          variant="comfortable"
+          httpTraceContracts={httpTraceContracts}
+          httpPullNonce={httpPullNonce}
+          httpAnchorBlock={httpAnchorBlock}
+        />
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { normalizeTraceWorkflowIdFilter } from "./traceClientTypes.js";
 import { syncEvaluationSubscriptions } from "./evaluationRuntime.js";
 import { registerChainRoutes } from "./routes/chain.js";
 import { registerWorkflowRoutes } from "./routes/workflows.js";
+import { replyJsonStringify } from "./jsonSafe.js";
 
 export async function buildServer() {
   const app = Fastify({ logger: true });
@@ -78,6 +79,29 @@ export async function buildServer() {
     const off = registerEvaluationClient(client);
     sock.on("close", off);
     sock.on("error", off);
+  });
+
+  /**
+   * Thrown errors (e.g. viem `RpcRequestError`) may carry non-JSON-safe fields; Fastify's default error
+   * path uses `JSON.stringify` and crashes on BigInt. Normal replies use {@link replyJsonStringify} via
+   * `setReplySerializer` (including non-2xx bodies from `reply.send()`).
+   */
+  app.setErrorHandler((error, request, reply) => {
+    request.log.error(error);
+    const err = error as Error & { statusCode?: number };
+    const statusCode =
+      typeof err.statusCode === "number" && err.statusCode >= 400 && err.statusCode < 600 ? err.statusCode : 500;
+    reply.code(statusCode).send({
+      statusCode,
+      error: statusCode >= 500 ? "Internal Server Error" : "Bad Request",
+      message: err.message || "Unknown error",
+    });
+  });
+
+  /** viem returns `bigint` for many on-chain fields; default Fastify JSON serialization throws on BigInt. */
+  app.setReplySerializer((payload) => {
+    if (typeof payload === "string") return payload;
+    return replyJsonStringify(payload);
   });
 
   return app;

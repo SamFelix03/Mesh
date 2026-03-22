@@ -3,7 +3,10 @@ import { triggerEmitterArtifact } from "../artifacts.js";
 import { shannonTestnet } from "../shannonChain.js";
 import { createPublicHttpClient, httpRpcUrl, requireDeployAccount } from "../sdk.js";
 
-export async function pingTriggerEmitter(emitter: Address, seq: bigint): Promise<Hex> {
+export async function pingTriggerEmitter(
+  emitter: Address,
+  seq: bigint,
+): Promise<{ hash: Hex; blockNumber: bigint }> {
   const account = requireDeployAccount();
   const art = triggerEmitterArtifact();
   const walletClient = createWalletClient({
@@ -20,6 +23,6 @@ export async function pingTriggerEmitter(emitter: Address, seq: bigint): Promise
     account,
   });
   const publicClient = createPublicHttpClient();
-  await publicClient.waitForTransactionReceipt({ hash });
-  return hash;
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  return { hash, blockNumber: receipt.blockNumber };
 }
