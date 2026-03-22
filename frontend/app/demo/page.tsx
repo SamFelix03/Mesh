@@ -11,6 +11,7 @@ type Row = {
   deployMode?: string;
   workflowNode?: string;
   nodeAddresses?: string[];
+  traceLogContracts?: string;
   /** Present when using `?full=1` — needed to map on-chain step `bytes32` → DSL node `id`. */
   definition?: { nodes?: { id: string; name?: string }[] };
 };

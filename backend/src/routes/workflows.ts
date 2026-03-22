@@ -21,12 +21,60 @@ import { deployCompiledWorkflow } from "../services/deployCompiledWorkflow.js";
 import { deployPerNodeFanoutWorkflow } from "../services/deployPerNodeFanout.js";
 import { deployDemoWorkflow } from "../services/deployDemoWorkflow.js";
 import { deleteWorkflowOnChain, pauseWorkflowOnChain, resolveWorkflowIdParam } from "../services/workflowLifecycle.js";
+import type { IndexedWorkflow } from "../services/workflowIndex.js";
 import {
   findWorkflowIndexEntry,
   indexDeployedWorkflow,
   loadWorkflowIndex,
   updateWorkflowIndexStatus,
 } from "../services/workflowIndex.js";
+
+/** API-only: comma-separated addresses for `GET /chain/trace-logs` when index rows omit `workflowNode` / `nodeAddresses`. */
+export type WorkflowListEntry = IndexedWorkflow & { traceLogContracts?: string };
+
+async function withTraceLogContracts(reg: Address, w: IndexedWorkflow): Promise<WorkflowListEntry> {
+  if (w.deployMode === "perNodeFanout" && w.nodeAddresses?.length) {
+    return {
+      ...w,
+      traceLogContracts: w.nodeAddresses.map((a) => getAddress(a)).join(","),
+    };
+  }
+  if (w.workflowNode?.trim()) {
+    return {
+      ...w,
+      traceLogContracts: getAddress(w.workflowNode.trim() as Address),
+    };
+  }
+
+  const wid = w.workflowId?.trim();
+  if (!wid || !isHex(wid) || wid.length !== 66) {
+    return { ...w };
+  }
+
+  try {
+    const client = createPublicHttpClient();
+    const exists = await client.readContract({
+      address: reg,
+      abi: workflowRegistryAbi,
+      functionName: "workflowExists",
+      args: [wid as `0x${string}`],
+    });
+    if (!exists) return { ...w };
+    const [, , nodes] = await client.readContract({
+      address: reg,
+      abi: workflowRegistryAbi,
+      functionName: "getWorkflow",
+      args: [wid as `0x${string}`],
+    });
+    if (!nodes.length) return { ...w };
+    return {
+      ...w,
+      traceLogContracts: nodes.map((n) => getAddress(n)).join(","),
+    };
+  } catch {
+    return { ...w };
+  }
+}
 
 const STATUS = ["None", "Active", "Paused", "Deleted"] as const;
 
@@ -42,7 +90,14 @@ export function registerWorkflowRoutes(app: FastifyInstance) {
   }>("/workflows", async (request) => {
     const full = request.query.full === "1" || request.query.full === "true";
     const { workflows } = loadWorkflowIndex();
-    if (full) return { workflows };
+    if (full) {
+      const reg = registryAddress();
+      if (reg) {
+        const enriched = await Promise.all(workflows.map((w) => withTraceLogContracts(reg, w)));
+        return { workflows: enriched };
+      }
+      return { workflows };
+    }
     return {
       workflows: workflows.map((w) => {
         const { definition: _omit, ...rest } = w;

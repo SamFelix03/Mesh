@@ -18,6 +18,8 @@ type Wf = {
   /** Executor or step contract(s) — used to HTTP-backfill `WorkflowStepExecuted` after Ping. */
   workflowNode?: string;
   nodeAddresses?: string[];
+  /** Set by `GET /workflows?full=1` when registry enrichment fills addresses (fixes sparse index rows). */
+  traceLogContracts?: string;
   definition?: { nodes?: { id: string; name?: string }[] };
 };
 
@@ -32,9 +34,10 @@ type Props = {
 };
 
 function httpTraceContractsFor(wf: Wf): string | undefined {
-  if (wf.deployMode === "perNodeFanout" && wf.nodeAddresses?.length)
-    return wf.nodeAddresses.join(",");
-  if (wf.workflowNode) return wf.workflowNode;
+  const enriched = wf.traceLogContracts?.trim();
+  if (enriched) return enriched;
+  if (wf.deployMode === "perNodeFanout" && wf.nodeAddresses?.length) return wf.nodeAddresses.join(",");
+  if (wf.workflowNode?.trim()) return wf.workflowNode.trim();
   return undefined;
 }
 
