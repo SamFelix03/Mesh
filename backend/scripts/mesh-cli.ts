@@ -52,10 +52,11 @@ async function main() {
   const cmd = positionals[0];
   if (!cmd) {
     console.log(`Usage:
-  mesh-cli init   (writes example.workflow.json, example.workflow.emit.json, example.workflow.hybrid.json)
-  mesh-cli validate --file workflows/example.workflow.json [--compiler] [--hybrid]
-  mesh-cli compile --file workflows/example.workflow.json
-  mesh-cli deploy-dsl --file workflows/example.workflow.json [--fanout]
+  mesh-cli init   (writes demo-01-hybrid-executor.workflow.json, demo-02-fanout-pipeline.workflow.json)
+  mesh-cli validate --file workflows/demo-01-hybrid-executor.workflow.json [--compiler] [--hybrid]
+  mesh-cli compile --file workflows/demo-01-hybrid-executor.workflow.json
+  mesh-cli deploy-dsl --file workflows/demo-01-hybrid-executor.workflow.json
+  mesh-cli deploy-dsl --file workflows/demo-02-fanout-pipeline.workflow.json --fanout
   mesh-cli deploy --id <workflowStringId> [--emitter 0x...]
   mesh-cli list
   mesh-cli status --id <workflowStringId|0xbytes32>
@@ -71,9 +72,8 @@ async function main() {
     const backendRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
     const templatesRoot = join(backendRoot, "..", "templates");
     const pairs = [
-      ["example.workflow.json", "example.workflow.json"],
-      ["example.workflow.emit.json", "example.workflow.emit.json"],
-      ["example.workflow.hybrid.json", "example.workflow.hybrid.json"],
+      ["demo-01-hybrid-executor.workflow.json", "demo-01-hybrid-executor.workflow.json"],
+      ["demo-02-fanout-pipeline.workflow.json", "demo-02-fanout-pipeline.workflow.json"],
     ] as const;
     for (const [name, destName] of pairs) {
       const src = join(templatesRoot, name);

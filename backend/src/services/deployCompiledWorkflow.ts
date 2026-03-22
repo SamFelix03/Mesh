@@ -13,6 +13,7 @@ import {
   createMeshSdkHttpPublic,
   createPublicHttpClient,
   httpRpcUrl,
+  meshContractDeployGas,
   requireDeployAccount,
 } from "../sdk.js";
 import { assertReactivityOwnerBalance } from "./reactivityBalance.js";
@@ -24,6 +25,7 @@ function requireRegistryAddress(): Address {
   }
   return raw as Address;
 }
+
 
 export type DeployCompiledWorkflowResult = {
   workflowId: Hex;
@@ -72,12 +74,14 @@ export async function deployCompiledWorkflow(def: WorkflowDefinition): Promise<D
     nextIndices: s.nextIndices.map((i) => Number(i)),
   }));
 
+  const deployGas = meshContractDeployGas();
   const deployHash = await walletClient.deployContract({
     abi: art.abi,
     bytecode: art.bytecode.object,
     args: [compiled.workflowId, compiled.rootStepNodeId, compiled.stepNodeIds, stepTuples],
     chain: shannonTestnet,
     account,
+    ...(deployGas !== undefined ? { gas: deployGas } : {}),
   });
   txHashes.deployMeshWorkflowExecutor = deployHash;
   const depReceipt = await publicClient.waitForTransactionReceipt({ hash: deployHash });

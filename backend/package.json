@@ -11,6 +11,7 @@
     "e2e:shannon": "tsx scripts/e2e-shannon.ts",
     "e2e:compiled": "tsx scripts/e2e-compiled-deploy.ts",
     "deploy:registry": "tsx scripts/deploy-registry.ts",
+    "demo:bootstrap:shannon": "tsx scripts/shannon-demo-bootstrap.ts",
     "mesh": "tsx scripts/mesh-cli.ts"
   },
   "dependencies": {

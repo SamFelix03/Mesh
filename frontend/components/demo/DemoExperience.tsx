@@ -1,0 +1,194 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useState } from "react";
+import { Activity, Radio, Zap } from "lucide-react";
+import { EvalFeed } from "../EvalFeed";
+import { TraceFeed } from "../TraceFeed";
+import { meshApiBase } from "../../lib/meshConfig";
+
+type Wf = {
+  workflowStringId: string;
+  workflowId: string;
+  name?: string;
+  hybridEvaluation?: boolean;
+  deployMode?: string;
+  emitter: string;
+};
+
+type Props = {
+  workflows: Wf[];
+  /** Shared Ping emitter (same for both demos after bootstrap). */
+  emitter: string | null;
+  hybrid: Wf | null;
+  fanout: Wf | null;
+};
+
+export function DemoExperience({ workflows, emitter, hybrid, fanout }: Props) {
+  const [pingMsg, setPingMsg] = useState<string | null>(null);
+  const [pingBusy, setPingBusy] = useState(false);
+
+  const ping = useCallback(async () => {
+    if (!emitter) return;
+    setPingBusy(true);
+    setPingMsg(null);
+    try {
+      const r = await fetch(`${meshApiBase()}/chain/ping`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ emitterAddress: emitter, seq: String(Date.now() % 1_000_000) }),
+      });
+      const j = (await r.json().catch(() => ({}))) as { error?: string; txHash?: string };
+      if (!r.ok) throw new Error(j.error ?? r.statusText);
+      setPingMsg(`Submitted · ${j.txHash}`);
+    } catch (e) {
+      setPingMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPingBusy(false);
+    }
+  }, [emitter]);
+
+  if (workflows.length === 0 || !emitter || (!hybrid && !fanout)) {
+    return (
+      <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-8 dark:border-amber-900/50 dark:bg-amber-950/30">
+        <h2 className="text-lg font-semibold text-amber-950 dark:text-amber-100">Demo data not loaded</h2>
+        <p className="mt-2 text-sm text-amber-900/80 dark:text-amber-200/90">
+          The API returned no indexed workflows, or the expected demo ids are missing. From the repo run{" "}
+          <code className="rounded bg-black/10 px-1 dark:bg-black/30">cd backend && npm run demo:bootstrap:shannon</code>{" "}
+          (after registry + <code className="rounded bg-black/10 px-1">PRIVATE_KEY</code> in <code className="rounded bg-black/10 px-1">backend/.env</code>), ensure{" "}
+          <code className="rounded bg-black/10 px-1">NEXT_PUBLIC_MESH_API</code> points at this backend, then refresh.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-12">
+      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/80 md:p-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              <Zap className="h-5 w-5 text-violet-500" />
+              Fire a test Ping
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+              Both demos listen for <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">Ping(uint256)</code> on this emitter. The backend
+              submits <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">POST /chain/ping</code> using its wallet (needs{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-900">PRIVATE_KEY</code>).
+            </p>
+            <code className="mt-3 block break-all rounded-lg bg-zinc-100 px-3 py-2 text-xs text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">{emitter}</code>
+          </div>
+          <button
+            type="button"
+            onClick={() => void ping()}
+            disabled={pingBusy}
+            className="shrink-0 rounded-xl bg-violet-600 px-6 py-3 text-sm font-medium text-white shadow transition hover:bg-violet-500 disabled:opacity-50 dark:bg-violet-500 dark:hover:bg-violet-400"
+          >
+            {pingBusy ? "Sending…" : "Ping (on-chain)"}
+          </button>
+        </div>
+        {pingMsg ? <p className="mt-4 text-sm text-zinc-700 dark:text-zinc-300">{pingMsg}</p> : null}
+        <p className="mt-4 text-xs text-zinc-500">
+          Alternative:{" "}
+          <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-900">
+            cast send {emitter} &quot;ping(uint256)&quot; 42 --rpc-url https://dream-rpc.somnia.network --private-key $PRIVATE_KEY
+          </code>
+        </p>
+      </section>
+
+      <div className="grid gap-8 lg:grid-cols-2">
+        <DemoCard
+          title="Demo 1 — Hybrid executor"
+          subtitle="Single MeshWorkflowExecutor: subscription + ethCalls + condition + emit. Evaluation stream (green) when EVALUATION_ENGINE=1."
+          wf={hybrid}
+          traceId={hybrid?.workflowId}
+          showEval={hybrid?.hybridEvaluation === true}
+        />
+        <DemoCard
+          title="Demo 2 — Per-node fan-out"
+          subtitle="Three MeshSimpleStepNode contracts, three subscriptions, same Ping filter. Trace shows activity across workflow-scoped streams."
+          wf={fanout}
+          traceId={fanout?.workflowId}
+          showEval={false}
+        />
+      </div>
+
+      <section className="rounded-2xl border border-zinc-200 bg-zinc-50/80 p-6 dark:border-zinc-800 dark:bg-zinc-900/40 md:p-8">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">End-user path (deployed frontend)</h2>
+        <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm text-zinc-700 dark:text-zinc-300">
+          <li>
+            Open this <strong>/demo</strong> page (bookmark for your Vercel / production URL).
+          </li>
+          <li>
+            Confirm <code className="rounded bg-white px-1 dark:bg-zinc-950">NEXT_PUBLIC_MESH_API</code> targets your public Workflow Manager (CORS + same Shannon
+            registry).
+          </li>
+          <li>
+            Click <strong>Ping</strong> (or use <code className="rounded bg-white px-1 dark:bg-zinc-950">cast</code> above).
+          </li>
+          <li>
+            Watch <strong>Live trace</strong> panels — requires <code className="rounded bg-white px-1 dark:bg-zinc-950">TRACE_ENGINE=1</code> on the API.
+          </li>
+          <li>
+            On Demo 1, watch <strong>Off-chain evaluation</strong> — requires <code className="rounded bg-white px-1 dark:bg-zinc-950">EVALUATION_ENGINE=1</code>.
+          </li>
+        </ol>
+      </section>
+    </div>
+  );
+}
+
+function DemoCard({
+  title,
+  subtitle,
+  wf,
+  traceId,
+  showEval,
+}: {
+  title: string;
+  subtitle: string;
+  wf: Wf | null;
+  traceId?: string;
+  showEval: boolean;
+}) {
+  if (!wf) {
+    return (
+      <div className="rounded-2xl border border-dashed border-zinc-300 p-6 text-sm text-zinc-500 dark:border-zinc-700">
+        {title} — not in index (run bootstrap).
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/80">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/40">
+          <Activity className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">{title}</h3>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{subtitle}</p>
+          <p className="mt-2 font-mono text-xs text-zinc-500">{wf.workflowStringId}</p>
+        </div>
+      </div>
+      <Link
+        href={`/workflows/${encodeURIComponent(wf.workflowStringId)}`}
+        className="inline-flex w-fit items-center gap-1 text-sm font-medium text-violet-600 hover:underline dark:text-violet-400"
+      >
+        Open full monitor →
+      </Link>
+      {showEval ? (
+        <div>
+          <h4 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
+            <Radio className="h-3.5 w-3.5" />
+            Off-chain evaluation
+          </h4>
+          <EvalFeed workflowIdBytes32={traceId} variant="comfortable" />
+        </div>
+      ) : null}
+      <div>
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Live trace</h4>
+        <TraceFeed workflowIdBytes32={traceId} variant="comfortable" />
+      </div>
+    </div>
+  );
+}

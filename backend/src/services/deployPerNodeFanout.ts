@@ -11,6 +11,7 @@ import {
   createMeshSdkHttpPublic,
   createPublicHttpClient,
   httpRpcUrl,
+  meshContractDeployGas,
   requireDeployAccount,
 } from "../sdk.js";
 import { assertReactivityOwnerBalance } from "./reactivityBalance.js";
@@ -69,6 +70,7 @@ export async function deployPerNodeFanoutWorkflow(def: WorkflowDefinition): Prom
 
   const art = meshSimpleStepNodeArtifact();
   const nodeAddresses: Address[] = [];
+  const deployGas = meshContractDeployGas();
 
   for (let i = 0; i < orderedIds.length; i++) {
     const step = compiled.steps[i]!;
@@ -79,6 +81,7 @@ export async function deployPerNodeFanoutWorkflow(def: WorkflowDefinition): Prom
       args: [compiled.workflowId, nodeIdBytes, step.target, step.data, step.logTopic0],
       chain: shannonTestnet,
       account,
+      ...(deployGas !== undefined ? { gas: deployGas } : {}),
     });
     txHashes[`deployNode_${i}`] = deployHash;
     const receipt = await publicClient.waitForTransactionReceipt({ hash: deployHash });

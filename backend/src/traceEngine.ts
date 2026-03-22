@@ -11,6 +11,8 @@ export async function startTraceSubscription(
 ) {
   return sdk.subscribe({
     ethCalls: [],
+    /** Empty ethCalls ⇒ empty simulationResults; node may default onlyPushChanges and suppress repeats. */
+    onlyPushChanges: false,
     onData,
     onError,
   });

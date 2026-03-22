@@ -1,0 +1,30 @@
+{
+  "chainId": 50312,
+  "rpc": "https://dream-rpc.somnia.network",
+  "explorer": "https://shannon-explorer.somnia.network",
+  "triggerEmitter": "0x268c2bE29D6b4e062ff979dA62931EEFF49FA1af",
+  "workflowRegistry": "0x231658eDc3CF6a3CeEADf6657A1A01Fa3bC942eC",
+  "auditLog": "0x41ffe131489F874B1759a2EeF5C9795AF4C9d50A",
+  "demo01HybridExecutor": {
+    "dslId": "mesh-showcase-shannon",
+    "workflowId": "0x49bcc797ce2d24f46c7c7daddeba076207b7a0f0117554ca7ad11929609203bc",
+    "contract": "MeshWorkflowExecutor",
+    "address": "0x7d474a384e20f146bf796c5a1039e9ac6ee4661d",
+    "rootSubscriptionId": "22401"
+  },
+  "demo02Fanout": {
+    "dslId": "mesh-demo-fanout-shannon",
+    "workflowId": "0xa2bbb76fe3aa56135a0403b3952e3158b9680c4da175c57811eb4abff4ba00aa",
+    "contract": "MeshSimpleStepNode",
+    "nodeAddresses": [
+      "0x3ee98cb215700fa23f9bba4d1b1c4714051dd927",
+      "0xac770220c1824b977953a5663e00be8f2f9a25df",
+      "0xbf2aea9da301e66c4b0f37868ab5f88a6fdfa9dc"
+    ],
+    "subscriptionIds": [
+      "22411",
+      "22412",
+      "22413"
+    ]
+  }
+}

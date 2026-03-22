@@ -54,7 +54,8 @@ export function formatTraceLine(jsonStr: string): string {
         nodeId: Hex;
         timestamp: bigint;
       };
-      return `WorkflowStepExecuted · wf=${workflowId} · step=${nodeId} · ts=${timestamp.toString()}`;
+      const recv = o.t != null ? ` · recvMs=${o.t}` : "";
+      return `WorkflowStepExecuted · wf=${workflowId} · step=${nodeId} · ts=${timestamp.toString()}${recv}`;
     }
     if (decoded.eventName === "WorkflowNoOp") {
       const { workflowId, nodeId, reason } = decoded.args as {
@@ -62,7 +63,8 @@ export function formatTraceLine(jsonStr: string): string {
         nodeId: Hex;
         reason: string;
       };
-      return `WorkflowNoOp · wf=${workflowId} · step=${nodeId} · ${reason}`;
+      const recvNo = o.t != null ? ` · recvMs=${o.t}` : "";
+      return `WorkflowNoOp · wf=${workflowId} · step=${nodeId} · ${reason}${recvNo}`;
     }
   } catch {
     /* not a Mesh trace event */

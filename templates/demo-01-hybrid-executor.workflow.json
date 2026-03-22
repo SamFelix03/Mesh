@@ -1,0 +1,32 @@
+{
+  "id": "mesh-showcase-shannon",
+  "name": "Demo 1 — Hybrid executor: Ping subscription + ethCalls + condition + on-chain emit",
+  "nodes": [
+    {
+      "id": "root",
+      "trigger": {
+        "type": "event",
+        "emitter": "0x1111111111111111111111111111111111111111",
+        "eventTopic0": "0x48257dc961b6f792c2b78a080dacfed693b660960a702de21cee364e20270e2f"
+      },
+      "ethCalls": [
+        {
+          "to": "0x1111111111111111111111111111111111111111",
+          "data": "0x87704569"
+        }
+      ],
+      "condition": {
+        "simulationResultIndex": 0,
+        "op": "uint256Gt",
+        "compareDecimal": "0",
+        "description": "TriggerEmitter.pingCount() > 0 after each ping"
+      },
+      "action": {
+        "type": "emit",
+        "eventSig": "Notify(uint256)",
+        "payload": "0x0000000000000000000000000000000000000000000000000000000000000001"
+      }
+    }
+  ],
+  "edges": []
+}

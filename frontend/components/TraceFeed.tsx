@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatTraceLine } from "../lib/traceDecode";
 import { meshTraceWebSocketUrl } from "../lib/meshConfig";
 
-type Line = { t: number; raw: string; pretty: string };
+type Line = { id: number; t: number; raw: string; pretty: string };
 
 type Props = {
   /** Resolved workflow id (bytes32 hex) — connects with `?workflowId=` for server-side filtering. */
@@ -18,6 +18,7 @@ export function TraceFeed({ workflowIdBytes32, variant = "compact" }: Props) {
   const [showRaw, setShowRaw] = useState(false);
   const [status, setStatus] = useState<"idle" | "connecting" | "open" | "error">("idle");
   const bottom = useRef<HTMLDivElement>(null);
+  const lineId = useRef(0);
 
   useEffect(() => {
     const url = meshTraceWebSocketUrl(workflowIdBytes32);
@@ -29,19 +30,21 @@ export function TraceFeed({ workflowIdBytes32, variant = "compact" }: Props) {
       const raw = typeof ev.data === "string" ? ev.data : "(binary)";
       const pretty = formatTraceLine(raw);
       setLines((prev) => {
-        const next = [...prev, { t: Date.now(), raw, pretty }];
+        const id = ++lineId.current;
+        const next = [...prev, { id, t: Date.now(), raw, pretty }];
         return next.slice(-80);
       });
     };
     return () => {
       ws.close();
+      lineId.current = 0;
       setStatus("idle");
     };
   }, [workflowIdBytes32]);
 
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: "smooth" });
-  }, [lines.length]);
+  }, [lines]);
 
   const filtered = Boolean(workflowIdBytes32?.trim());
 
@@ -72,8 +75,8 @@ export function TraceFeed({ workflowIdBytes32, variant = "compact" }: Props) {
         {lines.length === 0 ? (
           <span className="text-zinc-500">Waiting for events…</span>
         ) : (
-          lines.map((l, i) => (
-            <div key={`${l.t}-${i}`} className="border-b border-zinc-800/80 py-1 last:border-0">
+          lines.map((l) => (
+            <div key={l.id} className="border-b border-zinc-800/80 py-1 last:border-0">
               {showRaw ? l.raw : l.pretty}
             </div>
           ))

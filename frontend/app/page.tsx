@@ -26,12 +26,18 @@ export default function Home() {
             Cross-contract automation without bots. Build powerful reactive workflows on Somnia Shannon.
           </p>
         </div>
-        <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+          <Link
+            href="/demo"
+            className="inline-flex items-center justify-center rounded-md bg-violet-600 px-8 py-6 text-lg font-medium text-white shadow transition-colors hover:bg-violet-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+          >
+            Live demo (testnet)
+          </Link>
           <Link
             href="/workflows"
-            className="inline-flex items-center justify-center rounded-md bg-zinc-900 px-8 py-6 text-lg font-medium text-zinc-50 shadow transition-colors hover:bg-zinc-900/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-50/90 dark:focus-visible:ring-zinc-300"
+            className="inline-flex items-center justify-center rounded-md border border-zinc-300 bg-white px-8 py-6 text-lg font-medium text-zinc-900 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:bg-zinc-900"
           >
-            Get Started
+            Workflows
           </Link>
         </div>
       </div>

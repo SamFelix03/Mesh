@@ -46,9 +46,8 @@ Engineering inventory: what exists, how it maps to the PRD ([`mesh_prd.md`](mesh
 
 ### 1.4 Templates & docs
 
-- [`templates/example.workflow.json`](../templates/example.workflow.json) — compiler-ready linear example.  
-- [`templates/example.workflow.emit.json`](../templates/example.workflow.emit.json) — **`emit`**.  
-- [`templates/example.workflow.hybrid.json`](../templates/example.workflow.hybrid.json) — **`ethCalls` + condition**.  
+- [`templates/demo-01-hybrid-executor.workflow.json`](../templates/demo-01-hybrid-executor.workflow.json) — hybrid + **`emit`** (`mesh-showcase-shannon`).  
+- [`templates/demo-02-fanout-pipeline.workflow.json`](../templates/demo-02-fanout-pipeline.workflow.json) — per-node fan-out pipeline.  
 - [`docs/compiler-emit.md`](compiler-emit.md) — **`emit`** reference.
 - Root [`README.md`](../README.md) — product + quick start.
 - [`contracts/README.md`](../contracts/README.md) — contract roles + deploy.

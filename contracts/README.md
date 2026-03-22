@@ -12,13 +12,16 @@ forge test
 
 ## Deploy (Shannon)
 
-Set `PRIVATE_KEY` in the environment, then:
+Set `PRIVATE_KEY` in the environment, then use the fixed–gas-limit helper (recommended on Shannon — `forge script` can OOG when RPC underestimates CREATE gas):
 
 ```bash
-forge script script/DeployMesh.s.sol:DeployMeshScript \
-  --rpc-url https://dream-rpc.somnia.network \
-  --broadcast
+export PRIVATE_KEY=0x...
+export SOMNIA_RPC_URL=https://dream-rpc.somnia.network   # optional
+# optional: export MESH_DEPLOY_GAS_LIMIT=50000000
+./script/deploy-mesh-shannon.sh
 ```
+
+Alternatively, `forge script script/DeployMesh.s.sol:DeployMeshScript --rpc-url … --broadcast --private-key …` — if txs revert with full gas used, switch to the script above.
 
 Record `WorkflowRegistry` and `AuditLog` addresses; set `WORKFLOW_REGISTRY_ADDRESS` in the backend.
 
@@ -29,7 +32,7 @@ Record `WorkflowRegistry` and `AuditLog` addresses; set `WORKFLOW_REGISTRY_ADDRE
 | `WorkflowNode`         | Abstract base for per-node handlers; emits trace events. |
 | `WorkflowRegistry`     | Owner, node addresses, subscription IDs, pause/delete. |
 | `AuditLog`             | Append-only log for governance templates. |
-| `TriggerEmitter`       | Emits `Ping(uint256 indexed)` for subscription demos. |
+| `TriggerEmitter`       | Emits `Ping(uint256 indexed)`; exposes `pingCount()` for hybrid `ethCall` demos. |
 | `ReactionSink`         | Records handler hits (trusted `MeshEventWorkflowNode` only). |
 | `MeshEventWorkflowNode`| Production-style node: updates sink + `WorkflowStepExecuted`. |
 | `MeshWorkflowExecutor` | **Default compiler output:** single contract per workflow; step 0 = subscription entry; per step: optional `call`, or **`LOG1` emit** (`logTopic0` + payload, see [`docs/compiler-emit.md`](../docs/compiler-emit.md)), or noop; branching via `uint8[]`; emits `WorkflowStepExecuted` each step. |

@@ -21,7 +21,7 @@ Besides the default **single `MeshWorkflowExecutor` + one root subscription**, M
 
 - `POST /workflows/compile` — body `{ "definition", "deployMode": "perNodeFanout" }` for a dry-run summary (`nodeCount`, `rootTrigger`, etc.).
 - `POST /workflows/from-definition` — same `deployMode` to deploy.
-- CLI: **`npm run mesh -- deploy-dsl --file workflows/example.workflow.json --fanout`**
+- CLI: **`npm run mesh -- deploy-dsl --file workflows/demo-02-fanout-pipeline.workflow.json --fanout`**
 
 ## Default mode
 

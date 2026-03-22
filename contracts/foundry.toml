@@ -6,6 +6,8 @@ solc_version = "0.8.30"
 evm_version = "paris"
 optimizer = true
 optimizer_runs = 200
+# Simulation / test EVM block gas cap (does not set on-chain tx gas for `forge script --broadcast`).
+gas_limit = 30_000_000
 
 [fmt]
 bracket_spacing = true

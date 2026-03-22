@@ -46,7 +46,7 @@ Requires a working **WebSocket RPC** (`SOMNIA_WS_URL` / chain defaults).
 ## CLI
 
 ```bash
-npm run mesh -- validate --file workflows/example.workflow.hybrid.json --hybrid --compiler
+npm run mesh -- validate --file workflows/demo-01-hybrid-executor.workflow.json --hybrid --compiler
 ```
 
 ## References

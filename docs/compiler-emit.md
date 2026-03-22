@@ -70,8 +70,8 @@ const payload = encodeAbiParameters(parseAbiParameters("uint256 value"), [42n]);
 
 ```bash
 cd backend
-npm run mesh -- validate --file ../templates/example.workflow.emit.json --compiler
-npm run mesh -- compile --file ../templates/example.workflow.emit.json
+npm run mesh -- validate --file ../templates/demo-01-hybrid-executor.workflow.json --compiler --hybrid
+npm run mesh -- compile --file ../templates/demo-01-hybrid-executor.workflow.json
 ```
 
 ---

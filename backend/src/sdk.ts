@@ -35,6 +35,13 @@ export function httpRpcUrl() {
   return process.env.SOMNIA_RPC_URL ?? shannonTestnet.rpcUrls.default.http[0];
 }
 
+/** Optional fixed gas for large `CREATE` txs on Shannon (RPC estimates are often too low). */
+export function meshContractDeployGas(): bigint | undefined {
+  const raw = process.env.MESH_CONTRACT_DEPLOY_GAS?.trim();
+  if (!raw || !/^\d+$/.test(raw)) return undefined;
+  return BigInt(raw);
+}
+
 export function createPublicHttpClient(): PublicClient {
   return createPublicClient({
     chain: shannonTestnet,

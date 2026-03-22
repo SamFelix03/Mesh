@@ -1,0 +1,37 @@
+{
+  "id": "mesh-demo-fanout-shannon",
+  "name": "Demo 2 — Per-node fan-out: 3-step Ping pipeline (one Solidity subscription per step)",
+  "nodes": [
+    {
+      "id": "ingest",
+      "trigger": {
+        "type": "event",
+        "emitter": "0x1111111111111111111111111111111111111111",
+        "eventTopic0": "0x48257dc961b6f792c2b78a080dacfed693b660960a702de21cee364e20270e2f"
+      },
+      "action": { "type": "noop" }
+    },
+    {
+      "id": "relay",
+      "trigger": {
+        "type": "event",
+        "emitter": "0x1111111111111111111111111111111111111111",
+        "eventTopic0": "0x48257dc961b6f792c2b78a080dacfed693b660960a702de21cee364e20270e2f"
+      },
+      "action": { "type": "noop" }
+    },
+    {
+      "id": "tail",
+      "trigger": {
+        "type": "event",
+        "emitter": "0x1111111111111111111111111111111111111111",
+        "eventTopic0": "0x48257dc961b6f792c2b78a080dacfed693b660960a702de21cee364e20270e2f"
+      },
+      "action": { "type": "noop" }
+    }
+  ],
+  "edges": [
+    { "from": "ingest", "to": "relay", "label": "chain" },
+    { "from": "relay", "to": "tail", "label": "chain" }
+  ]
+}

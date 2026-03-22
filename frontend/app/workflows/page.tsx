@@ -53,7 +53,13 @@ export default async function WorkflowsPage() {
               Manage and monitor your reactive workflows
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/demo"
+              className="inline-flex items-center justify-center rounded-md bg-violet-600 px-6 py-3 text-sm font-medium text-white shadow transition-colors hover:bg-violet-500"
+            >
+              Live demo
+            </Link>
             <Link
               href="/workflows/build"
               className="inline-flex items-center justify-center rounded-md bg-zinc-900 px-6 py-3 text-sm font-medium text-zinc-50 shadow transition-colors hover:bg-zinc-900/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-950 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-50/90"
