@@ -27,9 +27,29 @@ type TracePush = {
   result?: { topics?: readonly Hex[]; data?: Hex; simulationResults?: readonly Hex[] };
   error?: string;
   tracePull?: boolean;
+  /** When Somnia / HTTP pull includes log placement (explorer links). */
+  transactionHash?: string;
+  blockNumber?: string | number;
+  logIndex?: number;
 };
 
 export type TraceSource = "ws" | "http";
+
+function pickExplorerMeta(o: TracePush): {
+  transactionHash?: string;
+  blockNumber?: string;
+  logIndex?: number;
+} {
+  const transactionHash =
+    typeof o.transactionHash === "string" && /^0x[a-fA-F0-9]{64}$/.test(o.transactionHash.trim())
+      ? o.transactionHash.trim()
+      : undefined;
+  const blockNumber =
+    o.blockNumber === undefined || o.blockNumber === null ? undefined : String(o.blockNumber);
+  const logIndex =
+    typeof o.logIndex === "number" && Number.isFinite(o.logIndex) ? o.logIndex : undefined;
+  return { transactionHash, blockNumber, logIndex };
+}
 
 export type ParsedTraceRow =
   | {
@@ -39,6 +59,9 @@ export type ParsedTraceRow =
       timestamp: string;
       receivedAtMs?: number;
       source: TraceSource;
+      transactionHash?: string;
+      blockNumber?: string;
+      logIndex?: number;
     }
   | {
       kind: "WorkflowNoOp";
@@ -47,6 +70,9 @@ export type ParsedTraceRow =
       reason: string;
       receivedAtMs?: number;
       source: TraceSource;
+      transactionHash?: string;
+      blockNumber?: string;
+      logIndex?: number;
     }
   | { kind: "error"; message: string; receivedAtMs?: number }
   | { kind: "other"; title: string; detail?: string; raw: string };
@@ -90,6 +116,7 @@ export function parseTraceMessage(jsonStr: string): ParsedTraceRow {
   }
   const source: TraceSource = o.tracePull ? "http" : "ws";
   const receivedAtMs = o.t;
+  const explorer = pickExplorerMeta(o);
 
   if (o.error) {
     return { kind: "error", message: o.error, receivedAtMs };
@@ -121,6 +148,7 @@ export function parseTraceMessage(jsonStr: string): ParsedTraceRow {
         timestamp: timestamp.toString(),
         receivedAtMs,
         source,
+        ...explorer,
       };
     }
     if (decoded.eventName === "WorkflowNoOp") {
@@ -136,6 +164,7 @@ export function parseTraceMessage(jsonStr: string): ParsedTraceRow {
         reason,
         receivedAtMs,
         source,
+        ...explorer,
       };
     }
   } catch {

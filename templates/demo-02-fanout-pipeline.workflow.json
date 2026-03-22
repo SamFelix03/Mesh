@@ -1,9 +1,10 @@
 {
   "id": "mesh-demo-fanout-shannon",
-  "name": "Demo 2 — Per-node fan-out: 3-step Ping pipeline (one Solidity subscription per step)",
+  "name": "Demo — Same Ping event, three contracts in a row (one subscription each)",
   "nodes": [
     {
       "id": "ingest",
+      "name": "Step 1 — first contract reacts to Ping",
       "trigger": {
         "type": "event",
         "emitter": "0x1111111111111111111111111111111111111111",
@@ -13,6 +14,7 @@
     },
     {
       "id": "relay",
+      "name": "Step 2 — middle contract reacts to Ping",
       "trigger": {
         "type": "event",
         "emitter": "0x1111111111111111111111111111111111111111",
@@ -22,6 +24,7 @@
     },
     {
       "id": "tail",
+      "name": "Step 3 — last contract reacts to Ping",
       "trigger": {
         "type": "event",
         "emitter": "0x1111111111111111111111111111111111111111",

@@ -73,8 +73,8 @@ export default function MeshNodeConfigPanel({ node, isRoot, updateNodeData, onCl
         </button>
       </div>
       <div className="flex-1 space-y-4 overflow-y-auto p-3">
-        <Field label="Display label">
-          <input className={inputClass} value={d.label} onChange={(e) => set({ label: e.target.value })} />
+        <Field label="Step name">
+          <input className={inputClass} value={d.name} onChange={(e) => set({ name: e.target.value })} />
         </Field>
         <Field label="Node id (DSL) — unique in graph">
           <input className={`${inputClass} font-mono text-xs`} value={d.dslId} onChange={(e) => set({ dslId: e.target.value })} />

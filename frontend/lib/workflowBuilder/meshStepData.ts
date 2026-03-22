@@ -7,7 +7,8 @@ function uniqueDomId(): string {
 
 /** React Flow `data` for each Mesh step node (maps to `WorkflowNodeDef`). */
 export type MeshStepData = {
-  label: string;
+  /** Maps to `WorkflowNodeDef.name` in exported JSON. */
+  name: string;
   /** Becomes `WorkflowNodeDef.id` — must be unique, DAG-safe id. */
   dslId: string;
   triggerType: "event" | "cron:block" | "cron:timestamp";
@@ -47,7 +48,7 @@ export function resetStepCounter(): void {
 
 function meshStepDataForIndex(n: number): MeshStepData {
   return {
-    label: `Step ${n}`,
+    name: `Step ${n}`,
     dslId: `step_${n}`,
     triggerType: "event",
     emitter: "0x0000000000000000000000000000000000000001",

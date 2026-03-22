@@ -95,6 +95,8 @@ export type ActionConfig = ActionCall | ActionEmit | ActionNoop;
 
 export type WorkflowNodeDef = {
   id: string;
+  /** Human-readable step name for UIs and traces; omit in legacy JSON — API normalizes to `id`. */
+  name?: string;
   trigger: TriggerConfig;
   condition?: ConditionConfig;
   /** XOR with `condition` for hybrid root: compound uint256 checks. */

@@ -1,5 +1,16 @@
 import type { WorkflowDefinition } from "./types.js";
 
+/** Ensures every node has a non-empty `name` (falls back to trimmed `id`). Pure / idempotent. */
+export function normalizeWorkflowDefinition(def: WorkflowDefinition): WorkflowDefinition {
+  return {
+    ...def,
+    nodes: def.nodes.map((n) => ({
+      ...n,
+      name: n.name?.trim() || n.id?.trim() || "",
+    })),
+  };
+}
+
 export class WorkflowValidationError extends Error {
   constructor(
     message: string,
@@ -11,7 +22,8 @@ export class WorkflowValidationError extends Error {
 }
 
 /** DAG checks only — ABI/topic/calldata validation comes with the compiler. */
-export function validateWorkflowDefinition(def: WorkflowDefinition): void {
+export function validateWorkflowDefinition(input: WorkflowDefinition): void {
+  const def = normalizeWorkflowDefinition(input);
   if (!def.id?.trim()) throw new WorkflowValidationError("workflow id required", "EMPTY_ID");
   if (!def.name?.trim()) throw new WorkflowValidationError("workflow name required", "EMPTY_NAME");
   if (!def.nodes?.length) throw new WorkflowValidationError("at least one node required", "NO_NODES");
@@ -19,6 +31,7 @@ export function validateWorkflowDefinition(def: WorkflowDefinition): void {
   const ids = new Set<string>();
   for (const n of def.nodes) {
     if (!n.id?.trim()) throw new WorkflowValidationError("node id required", "EMPTY_NODE_ID");
+    if (!n.name?.trim()) throw new WorkflowValidationError(`node ${n.id}: name required`, "EMPTY_NODE_NAME");
     if (ids.has(n.id)) throw new WorkflowValidationError(`duplicate node id: ${n.id}`, "DUP_NODE");
     ids.add(n.id);
     if (!n.trigger) throw new WorkflowValidationError(`node ${n.id}: trigger required`, "NO_TRIGGER");

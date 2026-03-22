@@ -62,6 +62,8 @@ export type ActionConfig = ActionCall | ActionEmit | ActionNoop;
 
 export type WorkflowNodeDef = {
   id: string;
+  /** Human-readable step name (export includes it; backend normalizes missing values to `id`). */
+  name?: string;
   trigger: TriggerConfig;
   condition?: ConditionConfig;
   conditionTree?: ConditionTree;

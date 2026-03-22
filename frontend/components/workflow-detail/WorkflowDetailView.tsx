@@ -2,10 +2,12 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { useMemo } from "react";
 import { EvalFeed } from "../EvalFeed";
 import { TraceFeed } from "../TraceFeed";
 import { CopyButton } from "./CopyButton";
 import { meshApiBase, shannonExplorerAddressUrl, shannonExplorerTxUrl } from "../../lib/meshConfig";
+import { buildStepNodeLabelMap } from "../../lib/workflowNodeLabels";
 
 type IndexMeta = {
   workflowStringId: string;
@@ -136,6 +138,13 @@ export function WorkflowDetailView({ pageId, data }: { pageId: string; data: OnC
 
   const statusTone =
     data.status.toLowerCase() === "active" ? "ok" : data.status.toLowerCase() === "paused" ? "warn" : "neutral";
+
+  const stepNodeLabels = useMemo(() => {
+    const nd = defNodes(meta?.definition);
+    const withId = nd.filter((n): n is { id: string; name?: string } => typeof n.id === "string" && n.id.length > 0);
+    if (!withId.length) return undefined;
+    return buildStepNodeLabelMap(withId);
+  }, [meta?.definition]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 md:py-16">
@@ -371,6 +380,7 @@ export function WorkflowDetailView({ pageId, data }: { pageId: string; data: OnC
               <table className="w-full min-w-[36rem] text-left text-sm">
                 <thead>
                   <tr className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-900/50">
+                    <th className="px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400">Name</th>
                     <th className="px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400">Node id</th>
                     <th className="px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400">Trigger</th>
                     <th className="px-4 py-3 font-medium text-zinc-600 dark:text-zinc-400">Action</th>
@@ -380,9 +390,11 @@ export function WorkflowDetailView({ pageId, data }: { pageId: string; data: OnC
                 <tbody>
                   {nodesDef.map((n) => {
                     const hid = n.id ?? "—";
+                    const stepName = typeof n.name === "string" && n.name.trim() ? n.name.trim() : hid;
                     const isHybrid = (n.ethCalls?.length ?? 0) > 0 || n.condition != null || n.conditionTree != null;
                     return (
                       <tr key={hid} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800/80">
+                        <td className="px-4 py-3 text-xs text-zinc-800 dark:text-zinc-200">{stepName}</td>
                         <td className="px-4 py-3 font-mono text-xs">{hid}</td>
                         <td className="px-4 py-3 text-xs text-zinc-700 dark:text-zinc-300">{n.trigger?.type ?? "—"}</td>
                         <td className="px-4 py-3 text-xs text-zinc-700 dark:text-zinc-300">{n.action?.type ?? "—"}</td>
@@ -422,7 +434,12 @@ export function WorkflowDetailView({ pageId, data }: { pageId: string; data: OnC
           subtitle="Workflow-scoped trace from the backend wildcard subscription. When TRACE_ENGINE=1, firing the root trigger should produce WorkflowStepExecuted / related lines here — proof the reactive path and indexer are wired."
         >
           <div className="min-h-[16rem]">
-            <TraceFeed workflowIdBytes32={data.workflowId} variant="comfortable" />
+            <TraceFeed
+              key={`trace-${data.workflowId}`}
+              workflowIdBytes32={data.workflowId}
+              variant="comfortable"
+              stepNodeLabels={stepNodeLabels}
+            />
           </div>
         </Section>
       </div>

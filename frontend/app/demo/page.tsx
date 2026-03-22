@@ -11,10 +11,12 @@ type Row = {
   deployMode?: string;
   workflowNode?: string;
   nodeAddresses?: string[];
+  /** Present when using `?full=1` — needed to map on-chain step `bytes32` → DSL node `id`. */
+  definition?: { nodes?: { id: string }[] };
 };
 
 async function fetchWorkflows(): Promise<Row[]> {
-  const r = await fetch(`${meshApiBase()}/workflows`, { cache: "no-store" });
+  const r = await fetch(`${meshApiBase()}/workflows?full=1`, { cache: "no-store" });
   if (!r.ok) return [];
   const j = (await r.json()) as { workflows: Row[] };
   return j.workflows ?? [];

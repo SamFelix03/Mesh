@@ -1,6 +1,10 @@
 import { getAddress, isAddress, isHex } from "viem";
 import type { ConditionTree, EvaluationOnPassHook, WorkflowDefinition } from "./dsl/types.js";
-import { validateWorkflowDefinition, WorkflowValidationError } from "./dsl/validateWorkflow.js";
+import {
+  normalizeWorkflowDefinition,
+  validateWorkflowDefinition,
+  WorkflowValidationError,
+} from "./dsl/validateWorkflow.js";
 import { assertAllReachableFromRoot, findSingleRootId } from "./compiler/dagOrder.js";
 
 const MAX_ETH_CALLS = 16;
@@ -109,7 +113,8 @@ function validateOneHook(h: EvaluationOnPassHook, i: number): void {
  * Hybrid path: root may carry `ethCalls` + `condition` / `conditionTree` for Somnia off-chain subscribe.
  * v1: only the **root** node; root trigger must be `event`.
  */
-export function validateHybridWorkflow(def: WorkflowDefinition): void {
+export function validateHybridWorkflow(input: WorkflowDefinition): void {
+  const def = normalizeWorkflowDefinition(input);
   validateWorkflowDefinition(def);
   if (!needsHybridEvaluation(def)) {
     throw new WorkflowValidationError(

@@ -1,9 +1,10 @@
 {
   "id": "mesh-showcase-shannon",
-  "name": "Demo 1 — Hybrid executor: Ping subscription + ethCalls + condition + on-chain emit",
+  "name": "Demo — Ping event → off-chain view call + rule → on-chain Notify",
   "nodes": [
     {
       "id": "root",
+      "name": "Listen for Ping, verify counter, then emit Notify",
       "trigger": {
         "type": "event",
         "emitter": "0x1111111111111111111111111111111111111111",

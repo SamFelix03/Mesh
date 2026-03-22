@@ -34,7 +34,7 @@ export const MeshStepNode = memo(({ data, isConnectable }: NodeProps<MeshStepDat
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1 text-sm font-bold text-zinc-900 dark:text-zinc-50">
             {d.hybridEnabled ? <GitBranch className="h-3.5 w-3.5 text-amber-500" aria-label="Hybrid" /> : null}
-            <span className="truncate">{d.label}</span>
+            <span className="truncate">{d.name}</span>
           </div>
           <div className="text-[11px] text-zinc-500">
             {triggerShort(d)} · {d.actionType}

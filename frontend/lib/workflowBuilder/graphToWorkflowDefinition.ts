@@ -172,6 +172,7 @@ export function graphToWorkflowDefinition(
     const d = s.data as MeshStepData;
     const node: WorkflowNodeDef = {
       id: d.dslId.trim(),
+      name: d.name?.trim() || d.dslId.trim(),
       trigger: buildTrigger(d),
       action: buildAction(d),
     };
@@ -315,7 +316,7 @@ export function workflowDefinitionToGraph(def: WorkflowDefinition): { nodes: Nod
 function meshStepDataFromWorkflowNode(n: WorkflowNodeDef, isRoot: boolean, rootWebhook: string): MeshStepData {
   const triggerType = n.trigger.type as MeshStepData["triggerType"];
   return {
-    label: n.id,
+    name: n.name?.trim() || n.id,
     dslId: n.id,
     triggerType,
     emitter: n.trigger.type === "event" ? n.trigger.emitter : "0x0000000000000000000000000000000000000001",

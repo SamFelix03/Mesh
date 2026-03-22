@@ -2,7 +2,11 @@ import type { FastifyInstance } from "fastify";
 import { getAddress, isAddress, isHex, zeroAddress, type Address } from "viem";
 import { compileWorkflowDefinition } from "../compiler/compileWorkflow.js";
 import { validateWorkflowForCompiler } from "../compiler/validateForCompiler.js";
-import { validateWorkflowDefinition, WorkflowValidationError } from "../dsl/validateWorkflow.js";
+import {
+  normalizeWorkflowDefinition,
+  validateWorkflowDefinition,
+  WorkflowValidationError,
+} from "../dsl/validateWorkflow.js";
 import {
   assertNoOrphanEvaluationHooks,
   definitionForOnChainCompile,
@@ -50,10 +54,11 @@ export function registerWorkflowRoutes(app: FastifyInstance) {
   app.post<{
     Body: { definition?: WorkflowDefinition; deployMode?: "executor" | "perNodeFanout" };
   }>("/workflows/compile", async (request, reply) => {
-    const def = request.body?.definition;
-    if (!def) {
+    const raw = request.body?.definition;
+    if (!raw) {
       return reply.code(400).send({ error: "Body must include definition (WorkflowDefinition)" });
     }
+    const def = normalizeWorkflowDefinition(raw);
     const deployMode = request.body.deployMode ?? "executor";
     try {
       if (deployMode === "perNodeFanout") {
@@ -112,10 +117,11 @@ export function registerWorkflowRoutes(app: FastifyInstance) {
   app.post<{
     Body: { definition?: WorkflowDefinition; forCompiler?: boolean; forHybrid?: boolean };
   }>("/workflows/validate", async (request, reply) => {
-    const def = request.body?.definition;
-    if (!def) {
+    const raw = request.body?.definition;
+    if (!raw) {
       return reply.code(400).send({ error: "Body must include definition (WorkflowDefinition)" });
     }
+    const def = normalizeWorkflowDefinition(raw);
     try {
       if (request.body?.forHybrid) {
         validateHybridWorkflow(def);
@@ -210,10 +216,11 @@ export function registerWorkflowRoutes(app: FastifyInstance) {
       return reply.code(503).send({ error: "PRIVATE_KEY is required" });
     }
 
-    const def = request.body?.definition;
-    if (!def) {
+    const raw = request.body?.definition;
+    if (!raw) {
       return reply.code(400).send({ error: "Body must include definition (WorkflowDefinition)" });
     }
+    const def = normalizeWorkflowDefinition(raw);
 
     const deployMode = request.body.deployMode ?? "executor";
 

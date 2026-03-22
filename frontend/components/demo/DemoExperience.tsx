@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Activity, Radio, Zap } from "lucide-react";
 import { EvalFeed } from "../EvalFeed";
 import { TraceFeed } from "../TraceFeed";
 import { meshApiBase } from "../../lib/meshConfig";
+import { buildStepNodeLabelMap } from "../../lib/workflowNodeLabels";
 
 type Wf = {
   workflowStringId: string;
@@ -17,6 +18,7 @@ type Wf = {
   /** Executor or step contract(s) — used to HTTP-backfill `WorkflowStepExecuted` after Ping. */
   workflowNode?: string;
   nodeAddresses?: string[];
+  definition?: { nodes?: { id: string }[] };
 };
 
 type Props = {
@@ -190,6 +192,15 @@ function DemoCard({
       </div>
     );
   }
+
+  const stepNodeLabels = useMemo(() => {
+    const nodes = wf.definition?.nodes;
+    if (!nodes?.length) return undefined;
+    const withId = nodes.filter((n): n is { id: string; name?: string } => typeof n.id === "string" && n.id.length > 0);
+    if (!withId.length) return undefined;
+    return buildStepNodeLabelMap(withId);
+  }, [wf.definition]);
+
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950/80">
       <div className="flex items-start gap-3">
@@ -220,11 +231,13 @@ function DemoCard({
       <div>
         <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Live trace</h4>
         <TraceFeed
+          key={`trace-${traceId ?? "none"}`}
           workflowIdBytes32={traceId}
           variant="comfortable"
           httpTraceContracts={httpTraceContracts}
           httpPullNonce={httpPullNonce}
           httpAnchorBlock={httpAnchorBlock}
+          stepNodeLabels={stepNodeLabels}
         />
       </div>
     </div>

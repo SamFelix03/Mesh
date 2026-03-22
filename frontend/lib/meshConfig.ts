@@ -20,6 +20,23 @@ export function shannonExplorerTxUrl(txHash: string): string {
   return `${shannonExplorerBase()}/tx/${h}`;
 }
 
+/** Blockscout-style block page (`/block/{number}`). */
+export function shannonExplorerBlockUrl(blockNumber: string | number): string {
+  const b = String(blockNumber).trim();
+  if (!/^\d+$/.test(b)) return shannonExplorerBase();
+  return `${shannonExplorerBase()}/block/${b}`;
+}
+
+/**
+ * Open the tx on Shannon explorer; `#eventlog_{index}` scrolls to the log on many Blockscout forks.
+ * If the fragment does nothing for your deployment, the tx page still shows all event logs.
+ */
+export function shannonExplorerTxLogUrl(txHash: string, logIndex?: number): string {
+  const base = shannonExplorerTxUrl(txHash);
+  if (logIndex == null || !Number.isFinite(logIndex)) return base;
+  return `${base}#eventlog_${logIndex}`;
+}
+
 /**
  * WebSocket URL for trace stream (`/ws/trace`).
  * Pass resolved on-chain `workflowId` (bytes32 hex) to filter server-side to that workflow’s `WorkflowStepExecuted` / `WorkflowNoOp` logs.
