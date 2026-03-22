@@ -96,12 +96,15 @@ export default async function WorkflowsPage() {
               >
                 <div>
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/30">
                         <Activity className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                       </div>
-                      <div className="flex-1 overflow-hidden">
-                        <h3 className="text-lg font-semibold truncate text-zinc-900 dark:text-zinc-50">
+                      <div className="flex-1 min-w-0">
+                        <h3 
+                          className="text-lg font-semibold truncate text-zinc-900 dark:text-zinc-50"
+                          title={w.name || w.workflowStringId}
+                        >
                           {w.name || w.workflowStringId}
                         </h3>
                       </div>
