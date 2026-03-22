@@ -10,15 +10,12 @@ Under the hood, Mesh leans on **`@somnia-chain/reactivity`** (TypeScript SDK for
 
 | Link | URL |
 | ---- | --- |
-| **Repository** | [github.com/samfelix03/mesh](https://github.com/samfelix03/mesh) |
 | **Live app** | [mesh-somnia.vercel.app](https://mesh-somnia.vercel.app) |
-| **Demo video** | *Coming soon* — shot list: [docs/demo-video-flow.md](https://github.com/samfelix03/mesh/blob/main/docs/demo-video-flow.md) |
-| **Block explorer** | [Shannon explorer](https://shannon-explorer.somnia.network/) |
-| **RPC** | `https://dream-rpc.somnia.network` (see [network-config.md](https://github.com/samfelix03/mesh/blob/main/docs/somnia-reactivity-docs/network-info/network-config.md)) |
+| **Demo video** | *Coming soon* |
 | **Demo deployment pin** | [backend/contracts/deployments/shannon-demo.json](https://github.com/samfelix03/mesh/blob/main/backend/contracts/deployments/shannon-demo.json) (updated by `demo:bootstrap:shannon`) |
 | **Paste-friendly UI demos (JSON)** | [workflow-demo-jsons/README.md](https://github.com/samfelix03/mesh/blob/main/workflow-demo-jsons/README.md) |
 
-**Shannon — team demo contracts** (explorer = Blockscout-style `/address/…` as in [frontend `shannonExplorerAddressUrl`](https://github.com/samfelix03/mesh/blob/main/frontend/lib/meshConfig.ts)):
+
 
 | Artifact | Role | Address (explorer) | Source |
 | -------- | ---- | ------------------ | ------ |
