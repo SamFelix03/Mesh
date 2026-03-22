@@ -40,7 +40,7 @@ Use this as a shot list for a **5–8 minute** screen recording. Target audience
 
 ### 6. API & ops (45s)
 
-- `GET /health`, `GET /workflows`, `POST /chain/ping` (already shown in UI).
+- `HEAD /health`, `GET /workflows`, `POST /chain/ping` (already shown in UI).
 - Mention `POST /workflows/from-definition`, pause/delete, `GET /workflows/:id/subscriptions/:subId` for debugging.
 
 ### 7. Close (20s)

@@ -52,7 +52,11 @@ const defaultEdgeOptions = { type: "meshCustom" as const };
 const snapGridTuple: [number, number] = [16, 16];
 const reactFlowProOptions = { hideAttribution: true as const };
 
-function createStartNode(): Node<MeshStartNodeData> {
+/** `useNodesState<T>` is typed over **node data** `T`, not `Node<T>`. */
+type MeshBuilderNodeData = MeshStartNodeData | MeshStepData;
+type MeshBuilderNode = Node<MeshBuilderNodeData>;
+
+function createStartNode(): MeshBuilderNode {
   return {
     id: WORKFLOW_START_NODE_ID,
     type: "meshStart",
@@ -73,7 +77,7 @@ function definitionNeedsHybrid(def: WorkflowDefinition): boolean {
 
 export default function MeshWorkflowBuilder() {
   const wrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState([createStartNode()]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<MeshBuilderNodeData>([createStartNode()]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [rf, setRf] = useState<unknown>(null);
   /** Store id only — React Flow's `node` object from `onNodeClick` goes stale after `setNodes`; panel must read from `nodes`. */
@@ -135,7 +139,7 @@ export default function MeshWorkflowBuilder() {
         }
         return eds;
       });
-      setNodes((nds) => nds.concat(newNode));
+      setNodes((nds) => nds.concat(newNode as Node<MeshBuilderNodeData>));
     },
     [rf, setNodes, setEdges],
   );

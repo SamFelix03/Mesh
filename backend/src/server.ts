@@ -21,7 +21,7 @@ export async function buildServer() {
 
   await app.register(websocket);
 
-  app.get("/health", async () => ({ ok: true, network: "somnia-shannon-testnet", chainId: 50312 }));
+  app.head("/health", async (_request, reply) => reply.code(200).send());
 
   registerWorkflowRoutes(app);
   registerChainRoutes(app);

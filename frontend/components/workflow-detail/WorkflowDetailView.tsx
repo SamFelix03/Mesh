@@ -39,6 +39,7 @@ type OnChain = {
 
 type DefNode = {
   id?: string;
+  name?: string;
   trigger?: { type?: string; emitter?: string };
   action?: { type?: string };
   ethCalls?: unknown[];

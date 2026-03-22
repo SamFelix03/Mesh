@@ -215,7 +215,7 @@ npm run dev
 
 Key routes:
 
-- `GET /health` — Shannon chain id
+- `HEAD /health` — liveness (200, no body)
 - `GET /workflows` — indexed deployments (omit `definition` by default; use `?full=true` to include stored DSL snapshots)
 - `POST /workflows` — `{ "workflowStringId": "..." }` demo deploy
 - `POST /workflows/validate` — `{ "definition", "forCompiler"?, "forHybrid"? }`
