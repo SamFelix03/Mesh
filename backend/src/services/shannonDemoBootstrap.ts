@@ -15,7 +15,12 @@ import { createPublicHttpClient, httpRpcUrl, meshContractDeployGas, requireDeplo
 import { workflowIdFromString } from "../workflowId.js";
 import { deployCompiledWorkflow } from "./deployCompiledWorkflow.js";
 import { deployPerNodeFanoutWorkflow } from "./deployPerNodeFanout.js";
-import { getWorkflowIndexFilePath, loadWorkflowIndex, type IndexedWorkflow } from "./workflowIndex.js";
+import {
+  getWorkflowIndexFilePath,
+  loadWorkflowIndex,
+  writeWorkflowIndexSnapshot,
+  type IndexedWorkflow,
+} from "./workflowIndex.js";
 
 const DEMO_IDS = new Set(["mesh-showcase-shannon", "mesh-demo-fanout-shannon"]);
 
@@ -256,7 +261,7 @@ export async function runShannonDemoBootstrap(log?: (msg: string) => void): Prom
 
   const merged: IndexedWorkflow[] = [...kept, hybridEntry, fanoutEntry];
   const indexPath = getWorkflowIndexFilePath();
-  writeFileSync(indexPath, JSON.stringify({ workflows: merged }, (_, v) => (typeof v === "bigint" ? v.toString() : v), 2));
+  writeWorkflowIndexSnapshot({ workflows: merged });
   L(`\nWrote index: ${indexPath}`);
 
   const deploymentDir = join(backendPackageRoot(), "contracts", "deployments");

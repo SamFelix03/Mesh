@@ -49,10 +49,15 @@ export function loadWorkflowIndex(): IndexFile {
   return JSON.parse(readFileSync(p, "utf8")) as IndexFile;
 }
 
-function saveWorkflowIndex(data: IndexFile): void {
+/** Ensures `data/` exists (needed on fresh deploys e.g. Render). */
+export function writeWorkflowIndexSnapshot(data: IndexFile): void {
   const p = indexPath();
   mkdirSync(dirname(p), { recursive: true });
   writeFileSync(p, JSON.stringify(data, (_, v) => (typeof v === "bigint" ? v.toString() : v), 2));
+}
+
+function saveWorkflowIndex(data: IndexFile): void {
+  writeWorkflowIndexSnapshot(data);
 }
 
 export function indexDeployedWorkflow(entry: IndexedWorkflow): void {
