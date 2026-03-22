@@ -9,9 +9,11 @@ type Line = { t: number; raw: string; pretty: string };
 type Props = {
   /** Resolved workflow id (bytes32 hex) — connects with `?workflowId=` for server-side filtering. */
   workflowIdBytes32?: string;
+  /** Larger panel + scroll area for workflow detail and demos. */
+  variant?: "compact" | "comfortable";
 };
 
-export function TraceFeed({ workflowIdBytes32 }: Props) {
+export function TraceFeed({ workflowIdBytes32, variant = "compact" }: Props) {
   const [lines, setLines] = useState<Line[]>([]);
   const [showRaw, setShowRaw] = useState(false);
   const [status, setStatus] = useState<"idle" | "connecting" | "open" | "error">("idle");
@@ -43,8 +45,14 @@ export function TraceFeed({ workflowIdBytes32 }: Props) {
 
   const filtered = Boolean(workflowIdBytes32?.trim());
 
+  const box =
+    variant === "comfortable"
+      ? "rounded-xl border border-zinc-200 bg-zinc-950 p-5 font-mono text-sm text-zinc-100 dark:border-zinc-800"
+      : "rounded-lg border border-zinc-200 bg-zinc-950 p-3 font-mono text-xs text-zinc-100 dark:border-zinc-800";
+  const scrollMax = variant === "comfortable" ? "max-h-[min(28rem,55vh)]" : "max-h-64";
+
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-950 p-3 font-mono text-xs text-zinc-100 dark:border-zinc-800">
+    <div className={box}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-zinc-400">
         <span>
           Live trace (Somnia reactivity push)
@@ -60,7 +68,7 @@ export function TraceFeed({ workflowIdBytes32 }: Props) {
           <span className="uppercase">{status}</span>
         </span>
       </div>
-      <div className="max-h-64 overflow-y-auto whitespace-pre-wrap break-all">
+      <div className={`${scrollMax} overflow-y-auto whitespace-pre-wrap break-all`}>
         {lines.length === 0 ? (
           <span className="text-zinc-500">Waiting for events…</span>
         ) : (

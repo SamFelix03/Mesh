@@ -29,9 +29,10 @@ function formatEvalLine(raw: string): string {
 
 type Props = {
   workflowIdBytes32?: string;
+  variant?: "compact" | "comfortable";
 };
 
-export function EvalFeed({ workflowIdBytes32 }: Props) {
+export function EvalFeed({ workflowIdBytes32, variant = "compact" }: Props) {
   const [lines, setLines] = useState<Line[]>([]);
   const [showRaw, setShowRaw] = useState(false);
   const [status, setStatus] = useState<"idle" | "connecting" | "open" | "error">("idle");
@@ -59,8 +60,14 @@ export function EvalFeed({ workflowIdBytes32 }: Props) {
 
   const filtered = Boolean(workflowIdBytes32?.trim());
 
+  const box =
+    variant === "comfortable"
+      ? "rounded-xl border border-emerald-900/40 bg-emerald-950/40 p-5 font-mono text-sm text-emerald-100"
+      : "rounded-lg border border-emerald-900/40 bg-emerald-950/40 p-3 font-mono text-xs text-emerald-100";
+  const scrollMax = variant === "comfortable" ? "max-h-[min(24rem,50vh)]" : "max-h-48";
+
   return (
-    <div className="rounded-lg border border-emerald-900/40 bg-emerald-950/40 p-3 font-mono text-xs text-emerald-100">
+    <div className={box}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-emerald-300/80">
         <span>
           Off-chain evaluation (ethCalls + condition)
@@ -77,7 +84,7 @@ export function EvalFeed({ workflowIdBytes32 }: Props) {
       <p className="mb-2 text-[0.65rem] text-emerald-400/70">
         Requires API <code className="rounded bg-black/30 px-1">EVALUATION_ENGINE=1</code> and a hybrid workflow in the index.
       </p>
-      <div className="max-h-48 overflow-y-auto whitespace-pre-wrap break-all">
+      <div className={`${scrollMax} overflow-y-auto whitespace-pre-wrap break-all`}>
         {lines.length === 0 ? (
           <span className="text-emerald-600/80">No verdicts yet…</span>
         ) : (

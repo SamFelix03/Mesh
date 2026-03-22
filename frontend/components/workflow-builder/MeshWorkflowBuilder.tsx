@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import ReactFlow, {
   ReactFlowProvider,
@@ -31,6 +31,7 @@ import {
 } from "@/lib/workflowBuilder/graphToWorkflowDefinition";
 import type { WorkflowDefinition } from "@/lib/workflowBuilder/dsl";
 import MeshNodeLibrary from "./MeshNodeLibrary";
+import WorkflowBuilderHelp from "./WorkflowBuilderHelp";
 import MeshNodeConfigPanel from "./MeshNodeConfigPanel";
 import MeshCustomEdge from "./MeshCustomEdge";
 import { MeshStartNode, type MeshStartNodeData } from "./MeshStartNode";
@@ -75,7 +76,8 @@ export default function MeshWorkflowBuilder() {
   const [nodes, setNodes, onNodesChange] = useNodesState([createStartNode()]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [rf, setRf] = useState<unknown>(null);
-  const [selected, setSelected] = useState<Node | null>(null);
+  /** Store id only — React Flow's `node` object from `onNodeClick` goes stale after `setNodes`; panel must read from `nodes`. */
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [workflowId, setWorkflowId] = useState("builder-workflow-1");
   const [workflowName, setWorkflowName] = useState("My workflow");
   const [deployMode, setDeployMode] = useState<"executor" | "perNodeFanout">("executor");
@@ -138,8 +140,17 @@ export default function MeshWorkflowBuilder() {
     [rf, setNodes, setEdges],
   );
 
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => setSelected(node), []);
-  const onPaneClick = useCallback(() => setSelected(null), []);
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => setSelectedId(node.id), []);
+  const onPaneClick = useCallback(() => setSelectedId(null), []);
+
+  const configNode = useMemo(
+    () => (selectedId ? (nodes.find((n) => n.id === selectedId) ?? null) : null),
+    [nodes, selectedId],
+  );
+
+  useEffect(() => {
+    if (selectedId && !nodes.some((n) => n.id === selectedId)) setSelectedId(null);
+  }, [nodes, selectedId]);
 
   const updateNodeData = useCallback(
     (nodeId: string, data: Partial<MeshStepData>) => {
@@ -203,7 +214,7 @@ export default function MeshWorkflowBuilder() {
       setEdges(ed);
       setWorkflowId(def.id);
       setWorkflowName(def.name);
-      setSelected(null);
+      setSelectedId(null);
       showBanner("ok", "Imported workflow onto canvas.");
       setTimeout(() => {
         const inst = rf as { fitView?: (o: { padding: number }) => void } | null;
@@ -293,7 +304,7 @@ export default function MeshWorkflowBuilder() {
     }
   }, [exportedDefinition, postDefinition, showBanner, deployMode, nodes, edges, workflowId, workflowName]);
 
-  const selectedIsRoot = selected?.type === "meshStep" && selected.id === rootDomId;
+  const selectedIsRoot = configNode?.type === "meshStep" && configNode.id === rootDomId;
 
   return (
     <div className="flex h-[100dvh] flex-col bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
@@ -343,7 +354,8 @@ export default function MeshWorkflowBuilder() {
       ) : null}
 
       <div className="flex min-h-0 flex-1">
-        <aside className="w-56 shrink-0 border-r border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+        <aside className="flex w-56 shrink-0 flex-col gap-3 border-r border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+          <WorkflowBuilderHelp />
           <MeshNodeLibrary />
           <div className="mt-6 space-y-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
             <p className="text-xs font-medium text-zinc-500">Import JSON</p>
@@ -452,13 +464,14 @@ export default function MeshWorkflowBuilder() {
           </ReactFlowProvider>
         </div>
 
-        {selected ? (
+        {configNode ? (
           <aside className="w-80 shrink-0 overflow-hidden border-l border-zinc-200 dark:border-zinc-800">
             <MeshNodeConfigPanel
-              node={selected}
+              key={configNode.id}
+              node={configNode}
               isRoot={Boolean(selectedIsRoot)}
               updateNodeData={updateNodeData}
-              onClose={() => setSelected(null)}
+              onClose={() => setSelectedId(null)}
             />
           </aside>
         ) : null}

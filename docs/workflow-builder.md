@@ -16,7 +16,7 @@ Mesh implementation lives under:
 | Page route | [`frontend/app/workflows/build/page.tsx`](../frontend/app/workflows/build/page.tsx) |
 | Main shell + API wiring | [`frontend/components/workflow-builder/MeshWorkflowBuilder.tsx`](../frontend/components/workflow-builder/MeshWorkflowBuilder.tsx) |
 | Start / step nodes | [`MeshStartNode.tsx`](../frontend/components/workflow-builder/MeshStartNode.tsx), [`MeshStepNode.tsx`](../frontend/components/workflow-builder/MeshStepNode.tsx) |
-| Palette | [`MeshNodeLibrary.tsx`](../frontend/components/workflow-builder/MeshNodeLibrary.tsx) |
+| Palette + help | [`MeshNodeLibrary.tsx`](../frontend/components/workflow-builder/MeshNodeLibrary.tsx), [`WorkflowBuilderHelp.tsx`](../frontend/components/workflow-builder/WorkflowBuilderHelp.tsx) (button → modal) |
 | Inspector | [`MeshNodeConfigPanel.tsx`](../frontend/components/workflow-builder/MeshNodeConfigPanel.tsx) |
 | Graph ↔ DSL | [`frontend/lib/workflowBuilder/graphToWorkflowDefinition.ts`](../frontend/lib/workflowBuilder/graphToWorkflowDefinition.ts) |
 | DSL JSON types (client) | [`frontend/lib/workflowBuilder/dsl.ts`](../frontend/lib/workflowBuilder/dsl.ts) |
@@ -53,6 +53,10 @@ CORS: set **`FRONTEND_ORIGIN`** on the API to include your Next dev origin (e.g.
 
 - **`reactflow`** — canvas (same family as the reference stack).
 - **`lucide-react`** — icons for nodes/toolbar (aligned with the reference look).
+
+## Inspector / React Flow gotcha (fixed)
+
+The step config panel must read node **`data` from the live `nodes` array** (keyed by `selectedId`), not the `node` object passed into `onNodeClick`. React Flow does not mutate that object when `useNodesState` updates — otherwise dropdowns (e.g. **Action** type) appear stuck on the first value even though JSON at the bottom updates.
 
 ## Limitations (v1 UI)
 

@@ -360,10 +360,16 @@ export function registerWorkflowRoutes(app: FastifyInstance) {
             deployMode: indexRow.deployMode ?? "executor",
             subscriptionIds: indexRow.subscriptionIds,
             nodeAddresses: indexRow.nodeAddresses,
+            emitter: indexRow.emitter,
+            sink: indexRow.sink,
+            workflowNode: indexRow.workflowNode,
+            subscriptionId: indexRow.subscriptionId,
+            transactionHashes: indexRow.transactionHashes,
           };
 
     return {
       workflowId,
+      registryAddress: reg,
       owner,
       status: STATUS[status] ?? `Unknown(${status})`,
       nodes,

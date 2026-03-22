@@ -41,6 +41,9 @@ function Field({
 const inputClass =
   "rounded-md border border-zinc-200 bg-white px-2 py-1.5 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100";
 
+/** Native `<select>` must stay clickable and show the current value (some resets look like “stuck on noop” if parent state is stale — fixed in builder). */
+const selectClass = `${inputClass} w-full min-w-0 cursor-pointer`;
+
 export default function MeshNodeConfigPanel({ node, isRoot, updateNodeData, onClose }: Props) {
   if (node.id === WORKFLOW_START_NODE_ID) {
     return (
@@ -81,7 +84,7 @@ export default function MeshNodeConfigPanel({ node, isRoot, updateNodeData, onCl
           <h3 className="mb-2 text-xs font-semibold uppercase text-zinc-500">Trigger</h3>
           <Field label="Type">
             <select
-              className={inputClass}
+              className={selectClass}
               value={d.triggerType}
               onChange={(e) => set({ triggerType: e.target.value as MeshStepData["triggerType"] })}
             >
@@ -113,16 +116,19 @@ export default function MeshNodeConfigPanel({ node, isRoot, updateNodeData, onCl
         </div>
 
         <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
-          <h3 className="mb-2 text-xs font-semibold uppercase text-zinc-500">Action</h3>
+          <h3 className="mb-2 text-xs font-semibold uppercase text-zinc-500">On-chain action</h3>
+          <p className="mb-2 text-[11px] leading-snug text-zinc-500">
+            Runs inside <code className="rounded bg-zinc-200/70 px-0.5 dark:bg-zinc-800">MeshWorkflowExecutor</code> when this step executes on-chain. This is separate from the optional off-chain hybrid block below.
+          </p>
           <Field label="Type">
             <select
-              className={inputClass}
-              value={d.actionType}
+              className={selectClass}
+              value={d.actionType === "call" || d.actionType === "emit" || d.actionType === "noop" ? d.actionType : "noop"}
               onChange={(e) => set({ actionType: e.target.value as MeshStepData["actionType"] })}
             >
-              <option value="noop">noop</option>
-              <option value="call">call</option>
-              <option value="emit">emit</option>
+              <option value="noop">noop (trace only)</option>
+              <option value="call">call (contract call)</option>
+              <option value="emit">emit (LOG1 + trace)</option>
             </select>
           </Field>
           {d.actionType === "call" ? (
@@ -149,10 +155,14 @@ export default function MeshNodeConfigPanel({ node, isRoot, updateNodeData, onCl
 
         {isRoot ? (
           <div className="border-t border-amber-200 bg-amber-50/80 p-3 dark:border-amber-900 dark:bg-amber-950/30">
-            <h3 className="mb-2 text-xs font-semibold uppercase text-amber-800 dark:text-amber-200">Hybrid (root only)</h3>
-            <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-              <input type="checkbox" checked={d.hybridEnabled} onChange={(e) => set({ hybridEnabled: e.target.checked })} />
-              Off-chain ethCall + condition (Somnia subscribe)
+            <h3 className="mb-1 text-xs font-semibold uppercase text-amber-800 dark:text-amber-200">Optional: off-chain monitor (root only)</h3>
+            <p className="mb-2 text-[11px] leading-snug text-amber-900/80 dark:text-amber-200/90">
+              When enabled, the <strong>API server</strong> (not the executor contract) subscribes via Somnia&apos;s WebSocket <code className="rounded bg-amber-200/50 px-0.5 dark:bg-amber-900/60">sdk.subscribe</code>, runs your view call in the same push as the event, checks a uint256 rule, streams results to <code className="rounded bg-amber-200/50 px-0.5 dark:bg-amber-900/60">/ws/evaluation</code>, and may POST a webhook. Set{" "}
+              <code className="rounded bg-amber-200/50 px-0.5 dark:bg-amber-900/60">EVALUATION_ENGINE=1</code> on the backend or nothing will run.
+            </p>
+            <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+              <input type="checkbox" className="mt-1" checked={d.hybridEnabled} onChange={(e) => set({ hybridEnabled: e.target.checked })} />
+              <span>Enable off-chain ethCall + condition + optional webhook</span>
             </label>
             {d.hybridEnabled ? (
               <div className="mt-3 space-y-3">
@@ -178,7 +188,7 @@ export default function MeshNodeConfigPanel({ node, isRoot, updateNodeData, onCl
                 {!d.hybridUseTree ? (
                   <>
                     <Field label="Operator">
-                      <select className={inputClass} value={d.hybridOp} onChange={(e) => set({ hybridOp: e.target.value as ConditionOpV1 })}>
+                      <select className={selectClass} value={d.hybridOp} onChange={(e) => set({ hybridOp: e.target.value as ConditionOpV1 })}>
                         {OPS.map((op) => (
                           <option key={op} value={op}>
                             {op}
@@ -194,7 +204,7 @@ export default function MeshNodeConfigPanel({ node, isRoot, updateNodeData, onCl
                   <>
                     <Field label="Tree combinator">
                       <select
-                        className={inputClass}
+                        className={selectClass}
                         value={d.hybridTreeCombinator}
                         onChange={(e) => set({ hybridTreeCombinator: e.target.value as "all" | "any" })}
                       >
@@ -204,7 +214,7 @@ export default function MeshNodeConfigPanel({ node, isRoot, updateNodeData, onCl
                     </Field>
                     <p className="text-[11px] text-zinc-500">Clause 1</p>
                     <Field label="op">
-                      <select className={inputClass} value={d.hybridOp} onChange={(e) => set({ hybridOp: e.target.value as ConditionOpV1 })}>
+                      <select className={selectClass} value={d.hybridOp} onChange={(e) => set({ hybridOp: e.target.value as ConditionOpV1 })}>
                         {OPS.map((op) => (
                           <option key={op} value={op}>
                             {op}
@@ -222,7 +232,7 @@ export default function MeshNodeConfigPanel({ node, isRoot, updateNodeData, onCl
                     {d.hybridTreeClause2Enabled ? (
                       <>
                         <Field label="Clause 2 op">
-                          <select className={inputClass} value={d.hybridTreeOp2} onChange={(e) => set({ hybridTreeOp2: e.target.value as ConditionOpV1 })}>
+                          <select className={selectClass} value={d.hybridTreeOp2} onChange={(e) => set({ hybridTreeOp2: e.target.value as ConditionOpV1 })}>
                             {OPS.map((op) => (
                               <option key={op} value={op}>
                                 {op}
